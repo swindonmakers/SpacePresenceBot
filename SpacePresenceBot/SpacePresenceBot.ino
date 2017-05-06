@@ -58,8 +58,8 @@ String formatTime(time_t t)
 }
 
 void handleNewMessages(int numNewMessages) {
-  Serial.println("handleNewMessages");
-  Serial.println(String(numNewMessages));
+  Serial.print(F("Telegram message received:"));
+  Serial.println(numNewMessages);
 
   for (int i=0; i<numNewMessages; i++) {
     String chat_id = String(bot.messages[i].chat_id);
@@ -70,14 +70,15 @@ void handleNewMessages(int numNewMessages) {
 
     if (text == "/chatid") {
       bot.sendMessage(chat_id, "The chat_id is: " + String(chat_id), "");
+      
     } else if (text == "/start") {
       String welcome = "Welcome to the Space Presencee Bot, " + from_name + ".\n";
-
       welcome += "The time is " + formatTime(ntp.localNow());
       
       bot.sendMessage(chat_id, welcome, "Markdown");
+      
     } else {
-      //bot.sendMessage(chat_id, "I don't understand how to " + text, "");
+      // unknown message
     }
   }
 }
@@ -221,7 +222,6 @@ void loop()
     int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
 
     while(numNewMessages) {
-      Serial.println(F("Message received"));
       handleNewMessages(numNewMessages);
       numNewMessages = bot.getUpdates(bot.last_message_received + 1);
     }
