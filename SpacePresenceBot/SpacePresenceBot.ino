@@ -281,24 +281,23 @@ void loop()
   // Check card reader
   if (millis() > cardreaderLastCheck + CARDREADER_CHECK_INTERVAL_MS) {
     if (mfrc522.PICC_IsNewCardPresent()) {
-      Serial.println(F("Reader reports new card"));
+      Serial.print(F("Reader reports new card"));
 
       if (mfrc522.PICC_ReadCardSerial()) {
         lastTokenTime = millis();
 
         updateTokenStr(mfrc522.uid.uidByte, mfrc522.uid.size);
 
-        if (lastToken != String(tokenStr)) {
-                
-          lastToken = String(tokenStr);
+        Serial.print(F(" -> with UID: "));
+        Serial.println(String(tokenStr));
 
-          Serial.print(F(" -> with UID: "));
-          Serial.println(lastToken);
+        if (lastToken != String(tokenStr)) {
+          lastToken = String(tokenStr);
 
           processToken(lastToken);
         }
       } else {
-        Serial.println(F("Failed to read card serial"));
+        Serial.println(F(" -> Failed to read card serial"));
       }
     } 
 
