@@ -59,7 +59,7 @@ String formatTime(time_t t)
     + ":" + String(formatNumber(second(t)));
 }
 
-void handleNewMessages(int numNewMessages) {
+void processTelegramMessages(int numNewMessages) {
   Serial.print(F("Telegram message received:"));
   Serial.println(numNewMessages);
 
@@ -181,6 +181,46 @@ void lcdTwoLine(String l1, String l2)
   lcdOffTime = millis() + LCD_ON_TIME;
 }
 
+void processToken(String token)
+{
+  lcdTwoLine("Let me check", "your token...");
+  unsigned long tStart = millis();
+
+  HTTPClient http;
+  http.begin(ACCESS_SYSTEM_API + token);
+  int httpCode = http.GET();
+  if (httpCode > 0) {
+
+    if (httpCode == HTTP_CODE_OK) {
+      String payload = http.getString();
+
+      // Give human time to read lcd message when api call is quick
+      while(tStart + 1500 > millis())
+        yield();
+
+      if (payload == "<No such person>") {
+        Serial.println(token + " returned <no such person>");
+        lcdTwoLine("Sorry, I don't", "know you.");
+      } else {
+        Serial.println(token + " identified as " + payload);
+        lcdTwoLine("Welcome!", payload);
+        bot.sendMessage(GROUP_CHAT_ID, payload + " has arrived in the space.", "");
+      }
+    } else {
+      Serial.print(token + " access server query failed, ");
+      Serial.print(httpCode);
+      Serial.print(" = ");
+      Serial.println(http.errorToString(httpCode));
+      lcdTwoLine("Sorry I couldn't", "check your id.");
+    }
+  } else {
+    Serial.println(token + " access server query returned httpcode = 0");
+    lcdTwoLine("Something went", "very wrong :(");
+  }
+
+  http.end();
+}
+
 void setup() 
 {
   Serial.begin(115200);
@@ -228,8 +268,9 @@ void loop()
     int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
 
     while(numNewMessages) {
-      handleNewMessages(numNewMessages);
+      processTelegramMessages(numNewMessages);
       numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+      yield();
     }
 
     telegramLastCheck = millis();
@@ -247,44 +288,9 @@ void loop()
           lastToken = String(tokenStr);
 
           Serial.print(F("Reader detected card with UID: "));
-          Serial.print(String(tokenStr));
-          Serial.println();
+          Serial.println(lastToken);
 
-          lcdTwoLine("Let me check", "your token...");
-          unsigned long t1 = millis();
-
-          HTTPClient http;
-          http.begin(ACCESS_SYSTEM_API + lastToken);
-          int httpCode = http.GET();
-          if (httpCode > 0) {
-
-            if (httpCode == HTTP_CODE_OK) {
-              String payload = http.getString();
-
-              // Give human time to read previous message if api call is quick
-              while(t1+1500 > millis())
-                yield();
-
-              if (payload == "<No such person>") {
-                Serial.println(lastToken + " returned <no such person>");
-                lcdTwoLine("Sorry, I don't", "know you.");
-              } else {
-                Serial.println(lastToken + " identified as " + payload);
-                lcdTwoLine("Welcome!", payload);
-                bot.sendMessage(GROUP_CHAT_ID, payload + " has arrived in the space.", "");
-              }
-            } else {
-              Serial.print(lastToken + " access server query failed, ");
-              Serial.print(httpCode);
-              Serial.print(" = ");
-              Serial.println(http.errorToString(httpCode));
-              lcdTwoLine("Sorry I couldn't", "check your id.");
-            }
-          } else {
-            Serial.println(lastToken + " access server query returned httpcode = 0");
-            lcdTwoLine("Something went", "very wrong :(");
-          }
-          http.end();
+          processToken(lastToken);
         }
       }
     } else {
