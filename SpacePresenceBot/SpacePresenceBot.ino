@@ -78,6 +78,29 @@ void processTelegramMessages(int numNewMessages) {
       welcome += "The time is " + formatTime(ntp.localNow());
       
       bot.sendMessage(chat_id, welcome, "Markdown");
+
+    } else if (text == "/status") {
+      Serial.println(F("Build status message"));
+      String message = "Millis: " + String(millis());
+      message += "\n Last Telegram: " + String(telegramLastCheck);
+      message += "\n Last Reader: " + String(cardreaderLastCheck);
+      message += "\n Last Token:" + String(lastTokenTime);
+      
+      bot.sendMessage(chat_id, message, "Markdown");
+      yield();
+
+      Serial.print(F("Run self test:"));
+      auto result = mfrc522.PCD_PerformSelfTest();
+      Serial.println(result);
+      message = "Self Test = ";
+      message += String(result);
+
+      bot.sendMessage(chat_id, message, "");
+      yield();
+
+      Serial.println(F("Init card reader"));
+      mfrc522.PCD_Init();
+      yield();
       
     } else {
       // unknown message
