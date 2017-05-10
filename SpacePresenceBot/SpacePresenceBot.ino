@@ -33,6 +33,7 @@ unsigned long card_lasttime; // last time a card was on the reader
 int card_mbts = 50; // time between polling the card reader
 
 unsigned long lcdOffTime = 0; // next time (in millis()) when we should turn off the lcd backlight
+#define LCD_ON_TIME 10000
 
 char tokenStr[14]; // token as hex string
 String lastToken; // last token as string
@@ -169,6 +170,16 @@ void dump_byte_array(byte *buffer, byte bufferSize) {
   }
 }
 
+void lcdTwoLine(String l1, String l2)
+{
+  lcd.clear();
+  lcd.print(l1);
+  lcd.setCursor(0,1);
+  lcd.print(l2);
+  lcd.setBacklight(HIGH);
+  lcdOffTime = millis() + LCD_ON_TIME;
+}
+
 void setup() 
 {
   Serial.begin(115200);
@@ -181,10 +192,7 @@ void setup()
   lcd.begin (16,2); // for 16 x 2 LCD module
   lcd.setBacklightPin(3,POSITIVE);
   lcd.setBacklight(HIGH);
-  lcd.home();
-  lcd.print("Space Check-in");
-  lcd.setCursor(0,1);
-  lcd.print("Connect wifi...");
+  lcdTwoLine("Space Check-in", "Connect wifi...");
 
   connectWifi();
 
@@ -206,10 +214,7 @@ void setup()
   SPI.begin();
   mfrc522.PCD_Init();    // Init MFRC522
 
-  lcd.clear();
-  lcd.print("Present id card");
-  lcd.setCursor(0,1);
-  lcd.print("to check-in.");
+  lcdTwoLine("Present id card", "to check-in.");
   lcdOffTime = millis() + 10000;
 }
 
@@ -231,7 +236,7 @@ void loop()
 
   if (millis() > card_lasttime + card_mbts) {
     if (mfrc522.PICC_IsNewCardPresent()) {
-      if ( mfrc522.PICC_ReadCardSerial()) {
+      if (mfrc522.PICC_ReadCardSerial()) {
         lastTokenTime = millis();
 
         updateTokenStr(mfrc522.uid.uidByte, mfrc522.uid.size);
@@ -244,12 +249,7 @@ void loop()
           Serial.print(String(tokenStr));
           Serial.println();
 
-          lcd.clear();
-          lcd.print("Let me check");
-          lcd.setCursor(0,1);
-          lcd.print("your token...");
-          lcd.setBacklight(HIGH);
-          lcdOffTime = millis() + 10000;
+          lcdTwoLine("Let me check", "your token...");
           unsigned long t1 = millis();
 
           HTTPClient http;
@@ -266,16 +266,10 @@ void loop()
 
               if (payload == "<No such person>") {
                 Serial.println(lastToken + " returned <no such person>");
-                lcd.clear();
-                lcd.print("Sorry, I don't");
-                lcd.setCursor(0,1);
-                lcd.print("know you.");
+                lcdTwoLine("Sorry, I don't", "know you.");
               } else {
                 Serial.println(lastToken + " identified as " + payload);
-                lcd.clear();
-                lcd.print("Welcome!");
-                lcd.setCursor(0,1);
-                lcd.print(payload);
+                lcdTwoLine("Welcome!", payload);
                 bot.sendMessage(GROUP_CHAT_ID, payload + " has arrived in the space.", "");
               }
             } else {
@@ -283,21 +277,13 @@ void loop()
               Serial.print(httpCode);
               Serial.print(" = ");
               Serial.println(http.errorToString(httpCode));
-              lcd.clear();
-              lcd.print("Sorry I couldn't");
-              lcd.setCursor(0,1);
-              lcd.print("check your id.");
+              lcdTwoLine("Sorry I couldn't", "check your id.");
             }
           } else {
             Serial.println(lastToken + " access server query returned httpcode = 0");
-            lcd.clear();
-            lcd.print("Something went");
-            lcd.setCursor(0,1);
-            lcd.print("very wrong :(");
+            lcdTwoLine("Something went", "very wrong :(");
           }
           http.end();
-          
-          lcdOffTime = millis() + 10000;
         }
       }
     } else {
