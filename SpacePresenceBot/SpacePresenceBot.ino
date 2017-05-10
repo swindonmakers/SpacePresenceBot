@@ -261,9 +261,11 @@ void setup()
 
 void loop() 
 {
+  // Housekeeping
   pka.loop();
   ntp.loop();
   
+  // Check Telegram
   if (millis() > telegramLastCheck + TELEGRAM_CHECK_INTERVAL_MS)  {
     int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
 
@@ -276,8 +278,11 @@ void loop()
     telegramLastCheck = millis();
   }
 
+  // Check card reader
   if (millis() > cardreaderLastCheck + CARDREADER_CHECK_INTERVAL_MS) {
     if (mfrc522.PICC_IsNewCardPresent()) {
+      Serial.println(F("Reader reports new card"));
+
       if (mfrc522.PICC_ReadCardSerial()) {
         lastTokenTime = millis();
 
@@ -287,22 +292,28 @@ void loop()
                 
           lastToken = String(tokenStr);
 
-          Serial.print(F("Reader detected card with UID: "));
+          Serial.print(F(" -> with UID: "));
           Serial.println(lastToken);
 
           processToken(lastToken);
         }
+      } else {
+        Serial.println(F("Failed to read card serial"));
       }
-    } else {
-      if (millis() > lastTokenTime + TOKEN_DEBOUNCE_TIME_MS) {
-        lastToken = "";
-      }
-    }
+    } 
 
     cardreaderLastCheck = millis();
   }
 
+  // Token debounce
+  if (lastToken != "" && millis() > lastTokenTime + TOKEN_DEBOUNCE_TIME_MS) {
+    Serial.println(F("Clear last token"));
+    lastToken = "";
+  }
+
+  // LCD Backlight timeout
   if (lcdOffTime !=0 && millis() > lcdOffTime) {
+    Serial.println(F("Backlight off"));
     lcd.setBacklight(LOW);
     lcd.clear();
     lcdOffTime = 0;
