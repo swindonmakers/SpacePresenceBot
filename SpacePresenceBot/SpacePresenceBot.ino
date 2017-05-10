@@ -26,19 +26,20 @@ WiFiClientSecure client;
 UniversalTelegramBot bot(BOTtoken, client);
 MFRC522 mfrc522(SS_PIN, RST_PIN); 
 
-int Bot_mtbs = 1000; //mean time between scan messages
-unsigned long Bot_lasttime; //last time messages' scan has been done
+unsigned long telegramLastCheck; // last time telegram messages poll completed
 
-unsigned long card_lasttime; // last time a card was on the reader
-int card_mbts = 50; // time between polling the card reader
+unsigned long cardreaderLastCheck; // last time we polled the card reader
+#define CARDREADER_CHECK_INTERVAL_MS 50
+
+unsigned long lastTokenTime; // millis when last token was detected
+#define TOKEN_DEBOUNCE_TIME_MS 5000
 
 unsigned long lcdOffTime = 0; // next time (in millis()) when we should turn off the lcd backlight
 #define LCD_ON_TIME 10000
 
 char tokenStr[14]; // token as hex string
 String lastToken; // last token as string
-unsigned long lastTokenTime; // millis when last token was presented
-int tokenDebounceTime = 5000;
+
 
 String formatNumber(int x)
 {
@@ -223,7 +224,7 @@ void loop()
   pka.loop();
   ntp.loop();
   
-  if (millis() > Bot_lasttime + Bot_mtbs)  {
+  if (millis() > telegramLastCheck + TELEGRAM_CHECK_INTERVAL_MS)  {
     int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
 
     while(numNewMessages) {
@@ -231,10 +232,10 @@ void loop()
       numNewMessages = bot.getUpdates(bot.last_message_received + 1);
     }
 
-    Bot_lasttime = millis();
+    telegramLastCheck = millis();
   }
 
-  if (millis() > card_lasttime + card_mbts) {
+  if (millis() > cardreaderLastCheck + CARDREADER_CHECK_INTERVAL_MS) {
     if (mfrc522.PICC_IsNewCardPresent()) {
       if (mfrc522.PICC_ReadCardSerial()) {
         lastTokenTime = millis();
@@ -287,12 +288,12 @@ void loop()
         }
       }
     } else {
-      if (millis() > lastTokenTime + tokenDebounceTime) {
+      if (millis() > lastTokenTime + TOKEN_DEBOUNCE_TIME_MS) {
         lastToken = "";
       }
     }
 
-    card_lasttime = millis();
+    cardreaderLastCheck = millis();
   }
 
   if (lcdOffTime !=0 && millis() > lcdOffTime) {
