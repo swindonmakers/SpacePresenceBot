@@ -101,7 +101,14 @@ void processTelegramMessages(int numNewMessages) {
       Serial.println(F("Init card reader"));
       mfrc522.PCD_Init();
       yield();
-      
+
+    } else if (text == "/initreader") {
+
+      Serial.println(F("Init card reader"));
+      mfrc522.PCD_Init();
+      yield();
+      bot.sendMessage(chat_id, "Reader init done", "");
+     
     } else {
       // unknown message
     }
