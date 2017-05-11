@@ -13,6 +13,7 @@
 #include <Wire.h>
 #include <LCD.h>
 #include <LiquidCrystal_I2C.h>
+#include <AnalogMultiButton.h>
 
 #define RST_PIN  16 // RST-PIN for RC522 - RFID - SPI - Modul GPIO5 
 #define SS_PIN  2 // SDA-PIN for RC522 - RFID - SPI - Modul GPIO4 
@@ -40,6 +41,16 @@ unsigned long lcdOffTime = 0; // next time (in millis()) when we should turn off
 char tokenStr[14]; // token as hex string
 String lastToken; // last token as string
 
+const int BUTTONS_TOTAL = 3;
+
+// find out what the value of analogRead is when you press each of your buttons and put them in this array
+// you can find this out by putting Serial.println(analogRead(BUTTONS_PIN)); in your loop() and opening the serial monitor to see the values
+// make sure they are in order of smallest to largest
+const int BUTTONS_VALUES[BUTTONS_TOTAL] = {14, 308, 464};
+
+AnalogMultiButton buttons(A0, BUTTONS_TOTAL, BUTTONS_VALUES);
+
+int stayTime = 0;
 
 String formatNumber(int x)
 {
@@ -234,7 +245,10 @@ void processToken(String token)
       } else {
         Serial.println(token + " identified as " + payload);
         lcdTwoLine("Welcome!", payload);
-        bot.sendMessage(GROUP_CHAT_ID, payload + " has arrived in the space.", "");
+        if (stayTime > 0)
+          bot.sendMessage(GROUP_CHAT_ID, payload + " has arrived in the space and will be around for about " + String(stayTime) + " hours", "");
+        else 
+          bot.sendMessage(GROUP_CHAT_ID, payload + " has arrived in the space.", "");
       }
     } else {
       Serial.print(token + " access server query failed, ");
@@ -294,6 +308,21 @@ void loop()
   // Housekeeping
   pka.loop();
   ntp.loop();
+
+  // Buttons
+  buttons.update();
+  if (buttons.onPress(0)) {
+    lcdTwoLine("Present id card", "1 hour stay");
+    stayTime = 1;
+  }
+  else if (buttons.onPress(1)) {
+    lcdTwoLine("Present id card", "2 hour stay");
+    stayTime = 2;
+  }
+  else if (buttons.onPress(2)) {
+    lcdTwoLine("Present id card", "3 hour stay");
+    stayTime = 3;
+  }
   
   // Check Telegram
   if (millis() > telegramLastCheck + TELEGRAM_CHECK_INTERVAL_MS)  {
@@ -325,6 +354,7 @@ void loop()
           lastToken = String(tokenStr);
 
           processToken(lastToken);
+          stayTime = 0;
         }
       } else {
         Serial.println(F(" -> Failed to read card serial"));
@@ -338,6 +368,7 @@ void loop()
   if (lastToken != "" && millis() > lastTokenTime + TOKEN_DEBOUNCE_TIME_MS) {
     Serial.println(F("Clear last token"));
     lastToken = "";
+    stayTime = 0;
   }
 
   // LCD Backlight timeout
@@ -346,5 +377,6 @@ void loop()
     lcd.setBacklight(LOW);
     lcd.clear();
     lcdOffTime = 0;
+    stayTime = 0;
   }
 }
