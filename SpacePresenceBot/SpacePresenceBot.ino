@@ -339,6 +339,18 @@ void loop()
 
   // Check card reader
   if (millis() > cardreaderLastCheck + CARDREADER_CHECK_INTERVAL_MS) {
+
+    // Get the MFRC522 firmware version to check the card reader comms are working
+    byte v = mfrc522.PCD_ReadRegister(MFRC522::VersionReg);
+    //Serial.print(F("Firmware Version: 0x"));
+    //Serial.println(v, HEX);
+    if ((v == 0x00) || (v == 0xFF)) { 
+      // When 0x00 or 0xFF is returned, communication probably failed
+      Serial.print(F("WARNING: Card reader communication failure, resetting..."));
+      mfrc522.PCD_Init();
+      Serial.println(F("done."));
+    }
+
     if (mfrc522.PICC_IsNewCardPresent()) {
       Serial.print(F("Reader reports new card"));
 
