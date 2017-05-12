@@ -298,14 +298,17 @@ void loop()
   if (buttons.onPress(0)) {
     lcdTwoLine("Present id card", "1 hour stay");
     stayTime = 1;
+    lastToken = "";
   }
   else if (buttons.onPress(1)) {
     lcdTwoLine("Present id card", "2 hour stay");
     stayTime = 2;
+    lastToken = "";
   }
   else if (buttons.onPress(2)) {
     lcdTwoLine("Present id card", "3 hour stay");
     stayTime = 3;
+    lastToken = "";
   }
   
   // Check Telegram
