@@ -249,6 +249,13 @@ void processToken(String token)
   http.end();
 }
 
+void setStayTime(int hours)
+{
+  lcdTwoLine("Present id card", String(hours) + " hour stay");
+  stayTime = hours;
+  lastToken = "";
+}
+
 void setup() 
 {
   Serial.begin(115200);
@@ -295,21 +302,9 @@ void loop()
 
   // Buttons
   buttons.update();
-  if (buttons.onPress(0)) {
-    lcdTwoLine("Present id card", "1 hour stay");
-    stayTime = 1;
-    lastToken = "";
-  }
-  else if (buttons.onPress(1)) {
-    lcdTwoLine("Present id card", "2 hour stay");
-    stayTime = 2;
-    lastToken = "";
-  }
-  else if (buttons.onPress(2)) {
-    lcdTwoLine("Present id card", "3 hour stay");
-    stayTime = 3;
-    lastToken = "";
-  }
+  if (buttons.onPress(0)) setStayTime(1);
+  else if (buttons.onPress(1)) setStayTime(2);
+  else if (buttons.onPress(2)) setStayTime(3);
   
   // Check Telegram
   if (millis() > telegramLastCheck + TELEGRAM_CHECK_INTERVAL_MS)  {
