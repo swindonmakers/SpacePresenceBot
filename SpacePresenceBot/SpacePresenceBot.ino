@@ -87,7 +87,6 @@ void processTelegramMessages(int numNewMessages) {
     } else if (text == "/start") {
       String welcome = "Welcome to the Space Presencee Bot, " + from_name + ".\n";
       welcome += "The time is " + formatTime(ntp.localNow());
-      
       bot.sendMessage(chat_id, welcome, "Markdown");
 
     } else if (text == "/status") {
@@ -98,23 +97,8 @@ void processTelegramMessages(int numNewMessages) {
       message += "\n Last Token:" + String(lastTokenTime);
       
       bot.sendMessage(chat_id, message, "Markdown");
-      yield();
-
-      Serial.print(F("Run self test:"));
-      auto result = mfrc522.PCD_PerformSelfTest();
-      Serial.println(result);
-      message = "Self Test = ";
-      message += String(result);
-
-      bot.sendMessage(chat_id, message, "");
-      yield();
-
-      Serial.println(F("Init card reader"));
-      mfrc522.PCD_Init();
-      yield();
 
     } else if (text == "/initreader") {
-
       Serial.println(F("Init card reader"));
       mfrc522.PCD_Init();
       yield();
@@ -342,8 +326,6 @@ void loop()
 
     // Get the MFRC522 firmware version to check the card reader comms are working
     byte v = mfrc522.PCD_ReadRegister(MFRC522::VersionReg);
-    //Serial.print(F("Firmware Version: 0x"));
-    //Serial.println(v, HEX);
     if ((v == 0x00) || (v == 0xFF)) { 
       // When 0x00 or 0xFF is returned, communication probably failed
       Serial.print(F("WARNING: Card reader communication failure, resetting..."));
