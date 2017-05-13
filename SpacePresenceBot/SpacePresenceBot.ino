@@ -326,7 +326,8 @@ void loop()
     byte v = mfrc522.PCD_ReadRegister(MFRC522::VersionReg);
     if ((v == 0x00) || (v == 0xFF)) { 
       // When 0x00 or 0xFF is returned, communication probably failed
-      Serial.print(F("WARNING: Card reader communication failure, resetting..."));
+      Serial.print(millis());
+      Serial.print(F(":WARNING: Card reader communication failure, resetting..."));
       mfrc522.PCD_Init();
       Serial.println(F("done."));
     }
