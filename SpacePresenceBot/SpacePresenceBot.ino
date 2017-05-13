@@ -309,6 +309,7 @@ void loop()
   // Check Telegram
   if (millis() > telegramLastCheck + TELEGRAM_CHECK_INTERVAL_MS)  {
     int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+    yield();
 
     while(numNewMessages) {
       processTelegramMessages(numNewMessages);
@@ -330,6 +331,7 @@ void loop()
       Serial.print(F(":WARNING: Card reader communication failure, resetting..."));
       mfrc522.PCD_Init();
       Serial.println(F("done."));
+      yield();
     }
 
     if (mfrc522.PICC_IsNewCardPresent()) {
@@ -353,7 +355,8 @@ void loop()
         Serial.println(F(" -> Failed to read card serial"));
       }
     } 
-
+    yield();
+    
     cardreaderLastCheck = millis();
   }
 
