@@ -30,7 +30,7 @@ MFRC522 mfrc522(SS_PIN, RST_PIN);
 unsigned long telegramLastCheck; // last time telegram messages poll completed
 
 unsigned long cardreaderLastCheck; // last time we polled the card reader
-#define CARDREADER_CHECK_INTERVAL_MS 50
+#define CARDREADER_CHECK_INTERVAL_MS 100
 
 unsigned long lastTokenTime; // millis when last token was detected
 #define TOKEN_DEBOUNCE_TIME_MS 5000
@@ -323,16 +323,11 @@ void loop()
   // Check card reader
   if (millis() > cardreaderLastCheck + CARDREADER_CHECK_INTERVAL_MS) {
 
-    // Get the MFRC522 firmware version to check the card reader comms are working
-    byte v = mfrc522.PCD_ReadRegister(MFRC522::VersionReg);
-    if ((v == 0x00) || (v == 0xFF)) { 
-      // When 0x00 or 0xFF is returned, communication probably failed
-      Serial.print(millis());
-      Serial.print(F(":WARNING: Card reader communication failure, resetting..."));
-      mfrc522.PCD_Init();
-      Serial.println(F("done."));
-      yield();
-    }
+    // Init the reader on every call to make sure its working correctly.
+    // Checking version first doesn't seem a reliable way to test if its working
+    // and the call to check card doesn't fail in any detecable way.
+    mfrc522.PCD_Init();
+    yield();
 
     if (mfrc522.PICC_IsNewCardPresent()) {
       Serial.print(F("Reader reports new card"));
