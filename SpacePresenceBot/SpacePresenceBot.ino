@@ -41,16 +41,17 @@ unsigned long lcdOffTime = 0; // next time (in millis()) when we should turn off
 char tokenStr[14]; // token as hex string
 String lastToken; // last token as string
 
-const int BUTTONS_TOTAL = 3;
+const int BUTTONS_TOTAL = 5;
 
 // find out what the value of analogRead is when you press each of your buttons and put them in this array
 // you can find this out by putting Serial.println(analogRead(BUTTONS_PIN)); in your loop() and opening the serial monitor to see the values
 // make sure they are in order of smallest to largest
-const int BUTTONS_VALUES[BUTTONS_TOTAL] = {14, 308, 464};
+const int BUTTONS_VALUES[BUTTONS_TOTAL] = {8, 303, 459, 554, 618};
 
 AnalogMultiButton buttons(A0, BUTTONS_TOTAL, BUTTONS_VALUES);
 
 int stayTime = 0;
+bool checkout = false;
 
 String formatNumber(int x)
 {
@@ -228,11 +229,18 @@ void processToken(String token)
         lcdTwoLine("Sorry, I don't", "know you.");
       } else {
         Serial.println(token + " identified as " + payload);
-        lcdTwoLine("Welcome!", payload);
-        if (stayTime > 0)
-          bot.sendMessage(GROUP_CHAT_ID, payload + " has arrived in the space and will be around for about " + String(stayTime) + " hours", "");
-        else 
-          bot.sendMessage(GROUP_CHAT_ID, payload + " has arrived in the space.", "");
+
+        if (checkout) {
+          lcdTwoLine("Goodbye", payload);
+          bot.sendMessage(GROUP_CHAT_ID, payload + " has left the space.", "");
+
+        } else {
+          lcdTwoLine("Welcome!", payload);
+          if (stayTime > 0)
+            bot.sendMessage(GROUP_CHAT_ID, payload + " has arrived in the space and will be around for about " + String(stayTime) + " hours", "");
+          else 
+            bot.sendMessage(GROUP_CHAT_ID, payload + " has arrived in the space.", "");
+        }
       }
     } else {
       Serial.print(token + " access server query failed, ");
@@ -254,6 +262,15 @@ void setStayTime(int hours)
   lcdTwoLine("Present id card", String(hours) + " hour stay");
   stayTime = hours;
   lastToken = "";
+  checkout = false;
+}
+
+void setCheckout()
+{
+  lcdTwoLine("Present id card", "to checkout");
+  stayTime = 0;
+  lastToken = "";
+  checkout = true;
 }
 
 void setup() 
@@ -305,6 +322,8 @@ void loop()
   if (buttons.onPress(0)) setStayTime(1);
   else if (buttons.onPress(1)) setStayTime(2);
   else if (buttons.onPress(2)) setStayTime(3);
+  else if (buttons.onPress(3)) setStayTime(4);
+  else if (buttons.onPress(4)) setCheckout();
   
   // Check Telegram
   if (millis() > telegramLastCheck + TELEGRAM_CHECK_INTERVAL_MS)  {
@@ -345,6 +364,7 @@ void loop()
 
           processToken(lastToken);
           stayTime = 0;
+          checkout = false;
         }
       } else {
         Serial.println(F(" -> Failed to read card serial"));
@@ -360,6 +380,7 @@ void loop()
     Serial.println(F("Clear last token"));
     lastToken = "";
     stayTime = 0;
+    checkout = false;
   }
 
   // LCD Backlight timeout
@@ -369,5 +390,6 @@ void loop()
     lcd.clear();
     lcdOffTime = 0;
     stayTime = 0;
+    checkout = false;
   }
 }
