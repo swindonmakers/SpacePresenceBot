@@ -34,7 +34,7 @@ rotate([0, 0, 90])
 	nodeMcu(justcuts);
 
 
-translate([120, 0, 0])
+translate([115, 0, 0])
 	buttonBoard(justcuts);
 
 
@@ -47,15 +47,21 @@ mirror([0, j, 0])
 translate([-(w/4-inset), -(h/2-inset), 0])
 	circle(d=hole);
 
-// Corner mount holes
+// Backplate mount holes
 inset2=7;
 for (i=[0,1], j=[0,1])
 mirror([i, 0, 0])
 mirror([0, j, 0])
 translate([-(w/2-inset2), -(h/2-inset2), 0])
 	circle(d=hole);
-
-
+for (i=[0,1])
+mirror([i, 0, 0])
+translate([-(w/2-inset2), 0, 0])
+	circle(d=hole);
+for (i=[0,1])
+mirror([0, i, 0])
+translate([0, -(h/2-inset2), 0])
+	circle(d=hole);
 
 module button(justcuts=false)
 {
