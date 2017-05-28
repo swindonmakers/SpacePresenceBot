@@ -1,0 +1,55 @@
+*Pick And Place List
+*Company=
+*Author=
+*eMail=
+*
+*Project=ButtonPcb
+*Date=21:04:26
+*CreatedBy=Fritzing 0.9.3b.04.19.5c895d327c44a3114e5fcc9d8260daf0cbb52806
+*
+*
+*Coordinates in mm, always center of component
+*Origin 0/0=Lower left corner of PCB
+*Rotation in degree (0-360, math. pos.)
+*
+*No;Value;Package;X;Y;Rotation;Side;Name
+1;;;76.0857;-14.0377;0;Bottom;Copper Fill22
+2;;;2.49944;-2.39787;0;Bottom;Hole3
+3;1k;THT;76.1594;-17.6379;180;Bottom;R1
+4;;;10.0965;-26.7885;0;Bottom;Copper Fill3
+5;;;59.7408;-15.1426;0;Bottom;Copper Fill19
+6;;;30.4165;-14.0377;0;Bottom;Copper Fill10
+7;;tactile-pth-12mm;12.6194;-8.84787;-90;Bottom;S5
+8;;tactile-pth-12mm;32.9394;-8.84787;-90;Bottom;S4
+9;;tactile-pth-12mm;63.4194;-8.84787;-90;Bottom;S2
+10;;;2.49944;-27.7979;0;Bottom;Hole2
+11;;;48.2194;-22.7179;0;Bottom;Hole5
+12;;;61.9506;-15.1426;0;Bottom;Copper Fill20
+13;;;31.496;-15.1426;0;Bottom;Copper Fill12
+14;;;8.9662;-15.1426;0;Bottom;Copper Fill7
+15;1k;THT;60.9194;-17.6379;180;Bottom;R2
+16;;;10.0965;-16.2729;0;Bottom;Copper Fill5
+17;;;29.2862;-15.1426;0;Bottom;Copper Fill11
+18;2.2k;THT;83.7794;-22.7179;90;Bottom;R5
+19;;;77.1906;-15.1426;0;Bottom;Copper Fill24
+20;;;30.4165;-16.2729;0;Bottom;Copper Fill9
+21;;;74.9808;-15.1426;0;Bottom;Copper Fill23
+22;;;88.8594;-2.39787;0;Bottom;Hole1
+23;;tactile-pth-12mm;48.1794;-8.84787;-90;Bottom;S3
+24;;;88.8594;-27.7979;0;Bottom;Hole4
+25;1k;THT;30.4394;-17.6379;180;Bottom;R4
+26;;;45.6565;-16.2729;0;Bottom;Copper Fill13
+27;;;10.0965;-28.8205;0;Bottom;Copper Fill2
+28;;;8.9916;-27.8426;0;Bottom;Copper Fill4
+29;;;46.736;-15.1426;0;Bottom;Copper Fill16
+30;;;60.8457;-16.2729;0;Bottom;Copper Fill17
+31;;THT;12.6594;-27.7979;90;Bottom;J1
+32;;;45.6565;-14.0377;0;Bottom;Copper Fill14
+33;1k;THT;45.6794;-17.6379;180;Bottom;R3
+34;;tactile-pth-12mm;78.6594;-8.84787;-90;Bottom;S1
+35;;;76.0857;-16.2729;0;Bottom;Copper Fill21
+36;;;60.8457;-14.0377;0;Bottom;Copper Fill18
+37;;;11.176;-15.1426;0;Bottom;Copper Fill8
+38;;;45.6184;-15.1045;0;Bottom;Copper Fill1
+39;;;10.0965;-14.0377;0;Bottom;Copper Fill6
+40;;;44.5262;-15.1426;0;Bottom;Copper Fill15
