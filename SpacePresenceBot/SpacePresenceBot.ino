@@ -1,3 +1,31 @@
+/* 
+  Connections:
+
+  NodeMCU <-> Switch Array
+  3.3V
+  GND
+  A0 - Button(s)
+
+  NodeMCU <-> LCD
+  VIN (5V)
+  GND
+  D2 - SDA (purple)
+  D1 - SCL (blue)
+
+  NodeMCU <-> Card Reader
+  3.3V
+  GND
+  D0 - RST (yellow)
+  D4 - SDA (orange)
+  D5 - SCK (blue)
+  D6 - MISO (gray)
+  D7 - MOSI (purple)
+
+  D3 - NC
+  D8 - NC
+
+*/
+
 #include "config.h"
 
 #include <ESP8266WiFi.h>
