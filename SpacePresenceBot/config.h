@@ -7,11 +7,10 @@
 // Telegram Group Id to send admin messages to
 #define ADMIN_CHAT_ID ""
 
-// How often to poll Telegram for messages (ms)
-#define TELEGRAM_CHECK_INTERVAL_MS 5000
-
 // URL to the access system for getting name from ID tag 
-#define ACCESS_SYSTEM_API ""
+#define ACCESS_SYSTEM_HOST ""
+#define ACCESS_SYSTEM_PORT 3000
+#define ACCESS_SYSTEM_URL "/who?token="
 
 // Initial AP name for WifiManager so we can connect to a real wifi network
 #define AP_NAME "SpacePresenceBot"

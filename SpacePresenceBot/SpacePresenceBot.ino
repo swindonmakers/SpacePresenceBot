@@ -241,7 +241,7 @@ void processToken(String token)
   unsigned long tStart = millis();
 
   HTTPClient http;
-  http.begin(ACCESS_SYSTEM_API + token);
+  http.begin(ACCESS_SYSTEM_HOST, ACCESS_SYSTEM_PORT, ACCESS_SYSTEM_URL + token);
   int httpCode = http.GET();
   if (httpCode > 0) {
 
