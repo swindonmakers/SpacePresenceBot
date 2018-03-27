@@ -11,7 +11,7 @@ difference(){
 		
 		translate([0, 3, 0])
 			square([10, 3.5]);
-		translate([0, 22+3, 0])
+		translate([0, 22+3+3.5, 0])
 			square([10, 3.5]);
 		
 		da=6;

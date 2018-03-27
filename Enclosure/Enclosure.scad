@@ -10,7 +10,7 @@ justcuts=true;
 
 
 // slight less than A4 border
-difference() {
+*difference() {
 	//TODO: (*)delete this square after exporting DXF
 	square([297, 210], center=true);
 
@@ -21,6 +21,10 @@ difference() {
 	translate([w/2-5, h/2-5, 0])
 		circle(d=10);
 }
+
+difference() {
+square([w, h], center=true);
+
 
 translate([w/4, 75, 0])
 	lcd(justcuts);
@@ -62,6 +66,8 @@ for (i=[0,1])
 mirror([0, i, 0])
 translate([0, -(h/2-inset2), 0])
 	circle(d=hole);
+
+}
 
 module button(justcuts=false)
 {
