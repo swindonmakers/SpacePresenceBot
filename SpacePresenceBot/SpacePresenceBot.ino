@@ -56,6 +56,8 @@ WiFiClientSecure client;
 UniversalTelegramBot bot(BOTtoken, client);
 MFRC522 mfrc522(SS_PIN, RST_PIN); 
 
+time_t bootTime = 0; // boot time
+
 unsigned long telegramLastCheck; // last time telegram messages poll completed
 
 unsigned long cardreaderLastCheck; // last time we polled the card reader
@@ -175,9 +177,12 @@ void processTelegramMessages(int numNewMessages) {
     } else if (text.startsWith("/debugdata") && from_id == ADMIN_ID) {
       Serial.println(F("Build debug message"));
       String message = "Millis: " + String(millis());
-      message += "\n Last Telegram: " + String(telegramLastCheck);
-      message += "\n Last Reader: " + String(cardreaderLastCheck);
-      message += "\n Last Token:" + String(lastTokenTime);
+      message += "\nTime: " + formatTime(ntp.localNow());
+      message += "\nBootTime: " + formatTime(bootTime);
+      message += "\nLast Telegram: " + String(telegramLastCheck);
+      message += "\nLast Reader: " + String(cardreaderLastCheck);
+      message += "\nLast Token:" + String(lastTokenTime);
+      
       
       bot.sendMessage(chat_id, message, "Markdown");
 
@@ -445,6 +450,8 @@ void loop()
   // Housekeeping
   pka.loop();
   ntp.loop();
+  if (timeStatus() == timeSet && bootTime == 0)
+    bootTime = ntp.localNow();
 
   // Buttons
   buttons.update();
