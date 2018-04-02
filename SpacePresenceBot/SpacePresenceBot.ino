@@ -109,6 +109,7 @@ void processTelegramMessages(int numNewMessages) {
   for (int i=0; i<numNewMessages; i++) {
     String chat_id = String(bot.messages[i].chat_id);
     String text = bot.messages[i].text;
+    text.toLowerCase();
 
     String from_name = bot.messages[i].from_name;
     if (from_name == "") from_name = "Guest";
@@ -119,33 +120,21 @@ void processTelegramMessages(int numNewMessages) {
     Serial.print("from_id:"); Serial.println(from_id);
     Serial.print("text:"); Serial.println(text);
 
-    if (text == "/chatid") {
-      bot.sendMessage(chat_id, "The chat_id is: " + String(chat_id), "");
-      
-    } else if (text == "/start") {
-      String welcome = "Welcome to the Space Presencee Bot, " + from_name + ".\n";
-      welcome += "The time is " + formatTime(ntp.localNow());
+    if (text.startsWith("/start") || text.startsWith("/about")) {
+      Serial.println(F("Build welcome message"));
+      String welcome = "Hello " + from_name + ", I'm the Space Presence Bot and I'll announce your name on Telegram when you ";
+      welcome += "scan your access token on the Makerspace Check-in hardware by the door.\n";
+      welcome += "If you'd like me to use a moniker other than the name you used when you signed up to the Makerspace you ";
+      welcome += "can use the /callme command to set a custom name.  You can always clear whatever you set by using the ";
+      welcome += "/resetname command.  Note that for both of these commands you also need to scan your token so make sure ";
+      welcome += "you are in the space!";
       bot.sendMessage(chat_id, welcome, "Markdown");
 
-    } else if (text == "/status") {
-      Serial.println(F("Build status message"));
-      String message = "Millis: " + String(millis());
-      message += "\n Last Telegram: " + String(telegramLastCheck);
-      message += "\n Last Reader: " + String(cardreaderLastCheck);
-      message += "\n Last Token:" + String(lastTokenTime);
-      
-      bot.sendMessage(chat_id, message, "Markdown");
-
-    } else if (text == "/initreader") {
-      Serial.println(F("Init card reader"));
-      mfrc522.PCD_Init();
-      yield();
-      bot.sendMessage(chat_id, "Reader init done", "");
-
     } else if (text.startsWith("/callme")) {
-      int i = text.indexOf(' ');
+      String originalMessage = bot.messages[i].text;
+      int i = originalMessage.indexOf(' ');
       if (i > 0) {
-        customName = text.substring(i+1);
+        customName = originalMessage.substring(i+1);
         bot.sendMessage(chat_id, "Okay, " + customName + ", please scan your card on the reader now. (Or let the display timeout to cancel)");
         lcdTwoLine("Scan your token", customName);
       } else {
@@ -156,6 +145,47 @@ void processTelegramMessages(int numNewMessages) {
       clearCustomName = true;
       bot.sendMessage(chat_id, "Okay, please scan your card on the reader now to clear your custom moniker. (Or let the display timeout to cancel)");
       lcdTwoLine("Scan your token", "to reset name.");
+
+    } else if (text.startsWith("/shownames")) {
+      String message;
+      Dir dir = SPIFFS.openDir("/");
+      while (dir.next()) {
+        File f = dir.openFile("r");
+        if (f) {
+          String moniker = f.readStringUntil('\n');
+          String realName = f.readStringUntil('\n');
+          message += realName + " (" + dir.fileName().substring(1) + ") : " + moniker + "\n";
+          f.close();
+        }
+      }
+      bot.sendMessage(chat_id, message, "Markdown");
+
+    } else if (text.startsWith("/remove")) {
+      int i = text.indexOf(' ');
+      if (i > 0) {
+        String tokenToRemove = text.substring(i+1);
+        if (SPIFFS.exists("/" + tokenToRemove)) {
+          SPIFFS.remove("/" + tokenToRemove);
+          bot.sendMessage(chat_id, "Removed");
+        } else {
+          bot.sendMessage(chat_id, "Not found");
+        }
+      }
+
+    } else if (text.startsWith("/debugdata")) {
+      Serial.println(F("Build debug message"));
+      String message = "Millis: " + String(millis());
+      message += "\n Last Telegram: " + String(telegramLastCheck);
+      message += "\n Last Reader: " + String(cardreaderLastCheck);
+      message += "\n Last Token:" + String(lastTokenTime);
+      
+      bot.sendMessage(chat_id, message, "Markdown");
+
+    } else if (text.startsWith("/initreader")) {
+      Serial.println(F("Init card reader"));
+      mfrc522.PCD_Init();
+      yield();
+      bot.sendMessage(chat_id, "Reader init done", "");
 
     } else {
       // unknown message
