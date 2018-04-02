@@ -1,9 +1,6 @@
-// Copyright Benoit Blanchon 2014-2017
+// ArduinoJson - arduinojson.org
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
-//
-// Arduino JSON library
-// https://bblanchon.github.io/ArduinoJson/
-// If you like this project, please add a star!
 
 #include <ArduinoJson.h>
 #include <catch.hpp>
@@ -23,7 +20,7 @@ TEST_CASE("JsonVariant::operator[]") {
     REQUIRE(std::string("element at index 1") == var[1]);
     REQUIRE(std::string("element at index 0") ==
             var[static_cast<unsigned char>(0)]);  // issue #381
-    REQUIRE_FALSE(var[-1].success());
+    REQUIRE_FALSE(var[666].success());
     REQUIRE_FALSE(var[3].success());
     REQUIRE_FALSE(var["0"].success());
   }

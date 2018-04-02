@@ -1,9 +1,6 @@
-# Copyright Benoit Blanchon 2014-2017
+# ArduinoJson - arduinojson.org
+# Copyright Benoit Blanchon 2014-2018
 # MIT License
-#
-# Arduino JSON library
-# https://bblanchon.github.io/ArduinoJson/
-# If you like this project, please add a star!
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "(GNU|Clang)")
 	add_compile_options(
@@ -19,16 +16,23 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "(GNU|Clang)")
 		-Wformat=2
 		-Winit-self
 		-Wmissing-include-dirs
-		-Wparentheses
 		-Wnon-virtual-dtor
 		-Wold-style-cast
 		-Woverloaded-virtual
+		-Wparentheses
 		-Wredundant-decls
 		-Wshadow
 		-Wsign-promo
+		-Wstrict-aliasing
 		-Wstrict-overflow=5
 		-Wundef
 	)
+
+	if(NOT MINGW)
+		add_compile_options(
+			-std=c++98
+		)
+	endif()
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")

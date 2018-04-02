@@ -1,9 +1,6 @@
-// Copyright Benoit Blanchon 2014-2017
+// ArduinoJson - arduinojson.org
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
-//
-// Arduino JSON library
-// https://bblanchon.github.io/ArduinoJson/
-// If you like this project, please add a star!
 
 #pragma once
 
@@ -12,24 +9,28 @@
 #include "./math.hpp"
 
 namespace ArduinoJson {
-namespace Polyfills {
+namespace Internals {
 
 template <typename T>
 inline T parseFloat(const char* s) {
-  typedef TypeTraits::FloatTraits<T> traits;
+  typedef FloatTraits<T> traits;
   typedef typename traits::mantissa_type mantissa_t;
   typedef typename traits::exponent_type exponent_t;
 
-  if (!s) return 0;
+  if (!s) return 0;  // NULL
 
   bool negative_result = false;
   switch (*s) {
     case '-':
       negative_result = true;
+      s++;
+      break;
     case '+':
       s++;
+      break;
   }
 
+  if (*s == 't') return 1;  // true
   if (*s == 'n' || *s == 'N') return traits::nan();
   if (*s == 'i' || *s == 'I')
     return negative_result ? -traits::inf() : traits::inf();

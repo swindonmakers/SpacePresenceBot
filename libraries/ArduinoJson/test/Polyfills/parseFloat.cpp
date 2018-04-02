@@ -1,14 +1,11 @@
-// Copyright Benoit Blanchon 2014-2017
+// ArduinoJson - arduinojson.org
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
-//
-// Arduino JSON library
-// https://bblanchon.github.io/ArduinoJson/
-// If you like this project, please add a star!
 
 #include <ArduinoJson/Polyfills/parseFloat.hpp>
 #include <catch.hpp>
 
-using namespace ArduinoJson::Polyfills;
+using namespace ArduinoJson::Internals;
 
 template <typename T>
 void check(const char* input, T expected) {
@@ -101,6 +98,11 @@ TEST_CASE("parseFloat<float>()") {
     checkInf<float>("+inf", false);
     checkInf<float>("-inf", true);
   }
+
+  SECTION("Boolean") {
+    check<float>("false", 0.0f);
+    check<float>("true", 1.0f);
+  }
 }
 
 TEST_CASE("parseFloat<double>()") {
@@ -166,5 +168,10 @@ TEST_CASE("parseFloat<double>()") {
   SECTION("NaN") {
     checkNaN<double>("NaN");
     checkNaN<double>("nan");
+  }
+
+  SECTION("Boolean") {
+    check<double>("false", 0.0);
+    check<double>("true", 1.0);
   }
 }

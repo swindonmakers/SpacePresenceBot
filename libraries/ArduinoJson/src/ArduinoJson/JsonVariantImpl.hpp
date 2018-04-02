@@ -1,9 +1,6 @@
-// Copyright Benoit Blanchon 2014-2017
+// ArduinoJson - arduinojson.org
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
-//
-// Arduino JSON library
-// https://bblanchon.github.io/ArduinoJson/
-// If you like this project, please add a star!
 
 #pragma once
 
@@ -56,16 +53,14 @@ inline T JsonVariant::variantAsInteger() const {
       return 0;
     case JSON_POSITIVE_INTEGER:
     case JSON_BOOLEAN:
-      return static_cast<T>(_content.asInteger);
+      return T(_content.asInteger);
     case JSON_NEGATIVE_INTEGER:
-      return static_cast<T>(_content.asInteger * -1);
+      return T(~_content.asInteger + 1);
     case JSON_STRING:
     case JSON_UNPARSED:
-      if (!_content.asString) return 0;
-      if (!strcmp("true", _content.asString)) return 1;
-      return Polyfills::parseInteger<T>(_content.asString);
+      return parseInteger<T>(_content.asString);
     default:
-      return static_cast<T>(_content.asFloat);
+      return T(_content.asFloat);
   }
 }
 
@@ -91,7 +86,7 @@ inline T JsonVariant::variantAsFloat() const {
       return -static_cast<T>(_content.asInteger);
     case JSON_STRING:
     case JSON_UNPARSED:
-      return Polyfills::parseFloat<T>(_content.asString);
+      return parseFloat<T>(_content.asString);
     default:
       return static_cast<T>(_content.asFloat);
   }
@@ -111,14 +106,15 @@ inline bool JsonVariant::variantIsInteger() const {
   using namespace Internals;
 
   return _type == JSON_POSITIVE_INTEGER || _type == JSON_NEGATIVE_INTEGER ||
-         (_type == JSON_UNPARSED && Polyfills::isInteger(_content.asString));
+         (_type == JSON_UNPARSED && isInteger(_content.asString));
 }
 
 inline bool JsonVariant::variantIsFloat() const {
   using namespace Internals;
 
-  return _type >= JSON_FLOAT_0_DECIMALS ||
-         (_type == JSON_UNPARSED && Polyfills::isFloat(_content.asString));
+  return _type == JSON_FLOAT || _type == JSON_POSITIVE_INTEGER ||
+         _type == JSON_NEGATIVE_INTEGER ||
+         (_type == JSON_UNPARSED && isFloat(_content.asString));
 }
 
 #if ARDUINOJSON_ENABLE_STD_STREAM

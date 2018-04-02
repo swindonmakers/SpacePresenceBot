@@ -1,9 +1,6 @@
-// Copyright Benoit Blanchon 2014-2017
+// ArduinoJson - arduinojson.org
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
-//
-// Arduino JSON library
-// https://bblanchon.github.io/ArduinoJson/
-// If you like this project, please add a star!
 
 #include <ArduinoJson.h>
 #include <catch.hpp>
@@ -13,42 +10,23 @@ TEST_CASE("JsonObject::set()") {
   DynamicJsonBuffer jb;
   JsonObject& _object = jb.createObject();
 
-  SECTION("SizeIncreased_WhenValuesAreAdded") {
-    _object.set("hello", 42);
-    REQUIRE(1 == _object.size());
-  }
-
-  SECTION("SizeUntouched_WhenSameValueIsAdded") {
-    _object["hello"] = 1;
-    _object["hello"] = 2;
-    REQUIRE(1 == _object.size());
-  }
-
-  SECTION("StoreInteger") {
+  SECTION("int") {
     _object.set("hello", 123);
 
     REQUIRE(123 == _object["hello"].as<int>());
     REQUIRE(_object["hello"].is<int>());
-    REQUIRE_FALSE(_object["hello"].is<double>());
+    REQUIRE_FALSE(_object["hello"].is<bool>());
   }
 
-  SECTION("StoreDouble") {
+  SECTION("double") {
     _object.set("hello", 123.45);
 
     REQUIRE(123.45 == _object["hello"].as<double>());
     REQUIRE(_object["hello"].is<double>());
-    REQUIRE_FALSE(_object["hello"].is<long>());
+    REQUIRE_FALSE(_object["hello"].is<bool>());
   }
 
-  SECTION("StoreDoubleWithDigits") {
-    _object.set("hello", 123.45, 2);
-
-    REQUIRE(123.45 == _object["hello"].as<double>());
-    REQUIRE(_object["hello"].is<double>());
-    REQUIRE_FALSE(_object["hello"].is<long>());
-  }
-
-  SECTION("StoreBoolean") {
+  SECTION("bool") {
     _object.set("hello", true);
 
     REQUIRE(_object["hello"].as<bool>());
@@ -56,7 +34,7 @@ TEST_CASE("JsonObject::set()") {
     REQUIRE_FALSE(_object["hello"].is<long>());
   }
 
-  SECTION("StoreString") {
+  SECTION("const char*") {
     _object.set("hello", "h3110");
 
     REQUIRE(std::string("h3110") == _object["hello"].as<const char*>());
@@ -64,7 +42,7 @@ TEST_CASE("JsonObject::set()") {
     REQUIRE_FALSE(_object["hello"].is<long>());
   }
 
-  SECTION("StoreArray") {
+  SECTION("nested array") {
     JsonArray& arr = jb.createArray();
 
     _object.set("hello", arr);
@@ -74,7 +52,7 @@ TEST_CASE("JsonObject::set()") {
     REQUIRE_FALSE(_object["hello"].is<JsonObject&>());
   }
 
-  SECTION("StoreObject") {
+  SECTION("nested object") {
     JsonObject& obj = jb.createObject();
 
     _object.set("hello", obj);
@@ -84,7 +62,7 @@ TEST_CASE("JsonObject::set()") {
     REQUIRE_FALSE(_object["hello"].is<JsonArray&>());
   }
 
-  SECTION("StoreArraySubscript") {
+  SECTION("array subscript") {
     JsonArray& arr = jb.createArray();
     arr.add(42);
 
@@ -93,7 +71,7 @@ TEST_CASE("JsonObject::set()") {
     REQUIRE(42 == _object["a"]);
   }
 
-  SECTION("StoreObjectSubscript") {
+  SECTION("object subscript") {
     JsonObject& obj = jb.createObject();
     obj.set("x", 42);
 
@@ -102,17 +80,59 @@ TEST_CASE("JsonObject::set()") {
     REQUIRE(42 == _object["a"]);
   }
 
-  SECTION("ShouldReturnTrue_WhenAllocationSucceeds") {
+  SECTION("returns true when allocation succeeds") {
     StaticJsonBuffer<JSON_OBJECT_SIZE(1) + 15> jsonBuffer;
     JsonObject& obj = jsonBuffer.createObject();
 
     REQUIRE(true == obj.set(std::string("hello"), std::string("world")));
   }
 
-  SECTION("ShouldReturnFalse_WhenAllocationFails") {
+  SECTION("returns false when allocation fails") {
     StaticJsonBuffer<JSON_OBJECT_SIZE(1) + 10> jsonBuffer;
     JsonObject& obj = jsonBuffer.createObject();
 
     REQUIRE(false == obj.set(std::string("hello"), std::string("world")));
+  }
+
+  SECTION("should not duplicate const char*") {
+    _object.set("hello", "world");
+    const size_t expectedSize = JSON_OBJECT_SIZE(1);
+    REQUIRE(expectedSize == jb.size());
+  }
+
+  SECTION("should duplicate char* value") {
+    _object.set("hello", const_cast<char*>("world"));
+    const size_t expectedSize = JSON_OBJECT_SIZE(1) + 6;
+    REQUIRE(expectedSize == jb.size());
+  }
+
+  SECTION("should duplicate char* key") {
+    _object.set(const_cast<char*>("hello"), "world");
+    const size_t expectedSize = JSON_OBJECT_SIZE(1) + 6;
+    REQUIRE(expectedSize == jb.size());
+  }
+
+  SECTION("should duplicate char* key&value") {
+    _object.set(const_cast<char*>("hello"), const_cast<char*>("world"));
+    const size_t expectedSize = JSON_OBJECT_SIZE(1) + 12;
+    REQUIRE(expectedSize <= jb.size());
+  }
+
+  SECTION("should duplicate std::string value") {
+    _object.set("hello", std::string("world"));
+    const size_t expectedSize = JSON_OBJECT_SIZE(1) + 6;
+    REQUIRE(expectedSize == jb.size());
+  }
+
+  SECTION("should duplicate std::string key") {
+    _object.set(std::string("hello"), "world");
+    const size_t expectedSize = JSON_OBJECT_SIZE(1) + 6;
+    REQUIRE(expectedSize == jb.size());
+  }
+
+  SECTION("should duplicate std::string key&value") {
+    _object.set(std::string("hello"), std::string("world"));
+    const size_t expectedSize = JSON_OBJECT_SIZE(1) + 12;
+    REQUIRE(expectedSize <= jb.size());
   }
 }

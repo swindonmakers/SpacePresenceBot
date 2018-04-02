@@ -1,9 +1,6 @@
-// Copyright Benoit Blanchon 2014-2017
+// ArduinoJson - arduinojson.org
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
-//
-// Arduino JSON library
-// https://bblanchon.github.io/ArduinoJson/
-// If you like this project, please add a star!
 
 #pragma once
 
@@ -17,8 +14,8 @@ class StringWriter {
    public:
     String(TChar** ptr) : _writePtr(ptr), _startPtr(*ptr) {}
 
-    void append(TChar c) {
-      *(*_writePtr)++ = c;
+    void append(char c) {
+      *(*_writePtr)++ = TChar(c);
     }
 
     const char* c_str() const {

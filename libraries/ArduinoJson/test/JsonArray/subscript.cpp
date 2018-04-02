@@ -1,9 +1,6 @@
-// Copyright Benoit Blanchon 2014-2017
+// ArduinoJson - arduinojson.org
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
-//
-// Arduino JSON library
-// https://bblanchon.github.io/ArduinoJson/
-// If you like this project, please add a star!
 
 #include <ArduinoJson.h>
 #include <stdint.h>
@@ -14,49 +11,37 @@ TEST_CASE("JsonArray::operator[]") {
   JsonArray& _array = _jsonBuffer.createArray();
   _array.add(0);
 
-  SECTION("SizeIsUnchanged") {
-    _array[0] = "hello";
-    REQUIRE(1U == _array.size());
-  }
-
-  SECTION("StoreInteger") {
+  SECTION("int") {
     _array[0] = 123;
     REQUIRE(123 == _array[0].as<int>());
     REQUIRE(true == _array[0].is<int>());
-    REQUIRE(false == _array[0].is<double>());
+    REQUIRE(false == _array[0].is<bool>());
   }
 
 #if ARDUINOJSON_USE_LONG_LONG || ARDUINOJSON_USE_INT64
-  SECTION("StoreLongLong") {
+  SECTION("long long") {
     _array[0] = 9223372036854775807;
     REQUIRE(9223372036854775807 == _array[0].as<long long>());
     REQUIRE(true == _array[0].is<int>());
-    REQUIRE(false == _array[0].is<double>());
+    REQUIRE(false == _array[0].is<bool>());
   }
 #endif
 
-  SECTION("StoreDouble") {
+  SECTION("double") {
     _array[0] = 123.45;
     REQUIRE(123.45 == _array[0].as<double>());
     REQUIRE(true == _array[0].is<double>());
     REQUIRE(false == _array[0].is<int>());
   }
 
-  SECTION("StoreDoubleWithDecimals") {
-    _array[0].set(123.45, 2);
-    REQUIRE(123.45 == _array[0].as<double>());
-    REQUIRE(true == _array[0].is<double>());
-    REQUIRE(false == _array[0].is<int>());
-  }
-
-  SECTION("StoreBoolean") {
+  SECTION("bool") {
     _array[0] = true;
     REQUIRE(true == _array[0].as<bool>());
     REQUIRE(true == _array[0].is<bool>());
     REQUIRE(false == _array[0].is<int>());
   }
 
-  SECTION("StoreString") {
+  SECTION("const char*") {
     const char* str = "hello";
 
     _array[0] = str;
@@ -66,7 +51,7 @@ TEST_CASE("JsonArray::operator[]") {
     REQUIRE(false == _array[0].is<int>());
   }
 
-  SECTION("StoreNestedArray") {
+  SECTION("nested array") {
     JsonArray& arr = _jsonBuffer.createArray();
 
     _array[0] = arr;
@@ -79,7 +64,7 @@ TEST_CASE("JsonArray::operator[]") {
     REQUIRE(false == _array[0].is<int>());
   }
 
-  SECTION("StoreNestedObject") {
+  SECTION("nested object") {
     JsonObject& obj = _jsonBuffer.createObject();
 
     _array[0] = obj;
@@ -92,7 +77,7 @@ TEST_CASE("JsonArray::operator[]") {
     REQUIRE(false == _array[0].is<int>());
   }
 
-  SECTION("StoreArraySubscript") {
+  SECTION("array subscript") {
     JsonArray& arr = _jsonBuffer.createArray();
     const char* str = "hello";
 
@@ -103,7 +88,7 @@ TEST_CASE("JsonArray::operator[]") {
     REQUIRE(str == _array[0]);
   }
 
-  SECTION("StoreObjectSubscript") {
+  SECTION("object subscript") {
     JsonObject& obj = _jsonBuffer.createObject();
     const char* str = "hello";
 
@@ -112,5 +97,23 @@ TEST_CASE("JsonArray::operator[]") {
     _array[0] = obj["x"];
 
     REQUIRE(str == _array[0]);
+  }
+
+  SECTION("should not duplicate const char*") {
+    _array[0] = "world";
+    const size_t expectedSize = JSON_ARRAY_SIZE(1);
+    REQUIRE(expectedSize == _jsonBuffer.size());
+  }
+
+  SECTION("should duplicate char*") {
+    _array[0] = const_cast<char*>("world");
+    const size_t expectedSize = JSON_ARRAY_SIZE(1) + 6;
+    REQUIRE(expectedSize == _jsonBuffer.size());
+  }
+
+  SECTION("should duplicate std::string") {
+    _array[0] = std::string("world");
+    const size_t expectedSize = JSON_ARRAY_SIZE(1) + 6;
+    REQUIRE(expectedSize == _jsonBuffer.size());
   }
 }

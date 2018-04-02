@@ -1,9 +1,6 @@
-// Copyright Benoit Blanchon 2014-2017
+// ArduinoJson - arduinojson.org
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
-//
-// Arduino JSON library
-// https://bblanchon.github.io/ArduinoJson/
-// If you like this project, please add a star!
 
 #include <ArduinoJson.h>
 #include <stdint.h>
@@ -24,7 +21,7 @@ TEST_CASE("JsonVariant::as()") {
 
   SECTION("DoubleAsString") {
     JsonVariant variant = 4.2;
-    REQUIRE(std::string("4.20") == variant.as<std::string>());
+    REQUIRE(std::string("4.2") == variant.as<std::string>());
   }
 
   SECTION("DoubleAsLong") {

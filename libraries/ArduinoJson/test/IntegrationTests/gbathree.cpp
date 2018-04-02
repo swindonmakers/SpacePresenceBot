@@ -1,9 +1,6 @@
-// Copyright Benoit Blanchon 2014-2017
+// ArduinoJson - arduinojson.org
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
-//
-// Arduino JSON library
-// https://bblanchon.github.io/ArduinoJson/
-// If you like this project, please add a star!
 
 #include <ArduinoJson.h>
 #include <catch.hpp>
@@ -87,7 +84,7 @@ TEST_CASE("Gbathree") {
 
     REQUIRE(3 == array.size());
 
-    for (int i = 0; i < 3; i++) {
+    for (size_t i = 0; i < 3; i++) {
       REQUIRE(50 == array[i]);
     }
   }
@@ -112,11 +109,11 @@ TEST_CASE("Gbathree") {
     REQUIRE(array.success());
     REQUIRE(4 == array.size());
 
-    for (int i = 0; i < 4; i++) {
+    for (size_t i = 0; i < 4; i++) {
       JsonArray& nestedArray = array[i];
       REQUIRE(4 == nestedArray.size());
 
-      for (int j = 0; j < 4; j++) {
+      for (size_t j = 0; j < 4; j++) {
         REQUIRE(34 == nestedArray[j]);
       }
     }
@@ -130,7 +127,7 @@ TEST_CASE("Gbathree") {
 
     REQUIRE(4 == array.size());
 
-    for (int i = 0; i < 4; i++) {
+    for (size_t i = 0; i < 4; i++) {
       REQUIRE(2 == array[i]);
     }
   }
@@ -143,7 +140,7 @@ TEST_CASE("Gbathree") {
 
     REQUIRE(4 == array.size());
 
-    for (int i = 0; i < 4; i++) {
+    for (size_t i = 0; i < 4; i++) {
       REQUIRE(2 == array[i]);
     }
   }
@@ -155,12 +152,12 @@ TEST_CASE("Gbathree") {
     REQUIRE(array.success());
     REQUIRE(4 == array.size());
 
-    for (int i = 0; i < 4; i++) {
+    for (size_t i = 0; i < 4; i++) {
       JsonArray& nestedArray = array[i];
 
       REQUIRE(4 == nestedArray.size());
 
-      for (int j = 0; j < 4; j++) {
+      for (size_t j = 0; j < 4; j++) {
         REQUIRE(15 == nestedArray[j]);
       }
     }
@@ -173,11 +170,11 @@ TEST_CASE("Gbathree") {
     REQUIRE(array.success());
     REQUIRE(4 == array.size());
 
-    for (int i = 0; i < 4; i++) {
+    for (size_t i = 0; i < 4; i++) {
       JsonArray& nestedArray = array[i];
       REQUIRE(4 == nestedArray.size());
 
-      for (int j = 0; j < 4; j++) {
+      for (size_t j = 0; j < 4; j++) {
         REQUIRE(15 == nestedArray[j]);
       }
     }
@@ -191,7 +188,7 @@ TEST_CASE("Gbathree") {
 
     REQUIRE(4 == array.size());
 
-    for (int i = 0; i < 4; i++) {
+    for (size_t i = 0; i < 4; i++) {
       REQUIRE(2 == array[i]);
     }
   }
@@ -204,7 +201,7 @@ TEST_CASE("Gbathree") {
 
     REQUIRE(4 == array.size());
 
-    for (int i = 0; i < 4; i++) {
+    for (size_t i = 0; i < 4; i++) {
       REQUIRE(2 == array[i]);
     }
   }

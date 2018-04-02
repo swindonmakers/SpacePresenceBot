@@ -1,9 +1,6 @@
-// Copyright Benoit Blanchon 2014-2017
+// ArduinoJson - arduinojson.org
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
-//
-// Arduino JSON library
-// https://bblanchon.github.io/ArduinoJson/
-// If you like this project, please add a star!
 
 #pragma once
 
@@ -28,7 +25,7 @@ class StaticStringBuilder {
     char *begin = p;
     while (p < end && *s) *p++ = *s++;
     *p = '\0';
-    return p - begin;
+    return size_t(p - begin);
   }
 
  private:

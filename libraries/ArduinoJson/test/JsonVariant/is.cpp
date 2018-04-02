@@ -1,9 +1,6 @@
-// Copyright Benoit Blanchon 2014-2017
+// ArduinoJson - arduinojson.org
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
-//
-// Arduino JSON library
-// https://bblanchon.github.io/ArduinoJson/
-// If you like this project, please add a star!
 
 #include <ArduinoJson.h>
 #include <catch.hpp>
@@ -50,10 +47,10 @@ void checkIsFloat(JsonVariant var) {
 void checkIsInteger(JsonVariant var) {
   REQUIRE(var.is<long>());
   REQUIRE(var.is<int>());
+  REQUIRE(var.is<float>());
+  REQUIRE(var.is<double>());
 
   REQUIRE_FALSE(var.is<bool>());
-  REQUIRE_FALSE(var.is<double>());
-  REQUIRE_FALSE(var.is<float>());
   REQUIRE_FALSE(var.is<const char*>());
   REQUIRE_FALSE(var.is<JsonArray>());
   REQUIRE_FALSE(var.is<JsonObject>());

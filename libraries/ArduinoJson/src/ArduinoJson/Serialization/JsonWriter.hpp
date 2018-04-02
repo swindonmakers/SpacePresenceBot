@@ -1,19 +1,14 @@
-// Copyright Benoit Blanchon 2014-2017
+// ArduinoJson - arduinojson.org
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
-//
-// Arduino JSON library
-// https://bblanchon.github.io/ArduinoJson/
-// If you like this project, please add a star!
 
 #pragma once
 
 #include <stdint.h>
 #include "../Data/Encoding.hpp"
-#include "../Data/JsonFloat.hpp"
 #include "../Data/JsonInteger.hpp"
 #include "../Polyfills/attributes.hpp"
-#include "../Polyfills/math.hpp"
-#include "../Polyfills/normalize.hpp"
+#include "../Serialization/FloatParts.hpp"
 
 namespace ArduinoJson {
 namespace Internals {
@@ -82,68 +77,63 @@ class JsonWriter {
     }
   }
 
-  void writeFloat(JsonFloat value, uint8_t digits = 2) {
-    if (Polyfills::isNaN(value)) return writeRaw("NaN");
+  template <typename TFloat>
+  void writeFloat(TFloat value) {
+    if (isNaN(value)) return writeRaw("NaN");
 
     if (value < 0.0) {
       writeRaw('-');
       value = -value;
     }
 
-    if (Polyfills::isInfinity(value)) return writeRaw("Infinity");
+    if (isInfinity(value)) return writeRaw("Infinity");
 
-    short powersOf10;
-    if (value > 1000 || value < 0.001) {
-      powersOf10 = Polyfills::normalize(value);
-    } else {
-      powersOf10 = 0;
-    }
+    FloatParts<TFloat> parts(value);
 
-    // Round up last digit (so that print(1.999, 2) prints as "2.00")
-    value += getRoundingBias(digits);
+    writeInteger(parts.integral);
+    if (parts.decimalPlaces) writeDecimals(parts.decimal, parts.decimalPlaces);
 
-    // Extract the integer part of the value and print it
-    JsonUInt int_part = static_cast<JsonUInt>(value);
-    JsonFloat remainder = value - static_cast<JsonFloat>(int_part);
-    writeInteger(int_part);
-
-    // Print the decimal point, but only if there are digits beyond
-    if (digits > 0) {
-      writeRaw('.');
-    }
-
-    // Extract digits from the remainder one at a time
-    while (digits-- > 0) {
-      // Extract digit
-      remainder *= 10.0;
-      char currentDigit = char(remainder);
-      remainder -= static_cast<JsonFloat>(currentDigit);
-
-      // Print
-      writeRaw(char('0' + currentDigit));
-    }
-
-    if (powersOf10 < 0) {
+    if (parts.exponent < 0) {
       writeRaw("e-");
-      writeInteger(-powersOf10);
+      writeInteger(-parts.exponent);
     }
 
-    if (powersOf10 > 0) {
+    if (parts.exponent > 0) {
       writeRaw('e');
-      writeInteger(powersOf10);
+      writeInteger(parts.exponent);
     }
   }
 
-  void writeInteger(JsonUInt value) {
+  template <typename UInt>
+  void writeInteger(UInt value) {
     char buffer[22];
-    char *ptr = buffer + sizeof(buffer) - 1;
+    char *end = buffer + sizeof(buffer) - 1;
+    char *ptr = end;
 
     *ptr = 0;
     do {
-      *--ptr = static_cast<char>(value % 10 + '0');
-      value /= 10;
+      *--ptr = char(value % 10 + '0');
+      value = UInt(value / 10);
     } while (value);
 
+    writeRaw(ptr);
+  }
+
+  void writeDecimals(uint32_t value, int8_t width) {
+    // buffer should be big enough for all digits, the dot and the null
+    // terminator
+    char buffer[16];
+    char *ptr = buffer + sizeof(buffer) - 1;
+
+    // write the string in reverse order
+    *ptr = 0;
+    while (width--) {
+      *--ptr = char(value % 10 + '0');
+      value /= 10;
+    }
+    *--ptr = '.';
+
+    // and dump it in the right order
     writeRaw(ptr);
   }
 
@@ -160,26 +150,6 @@ class JsonWriter {
 
  private:
   JsonWriter &operator=(const JsonWriter &);  // cannot be assigned
-
-  static JsonFloat getLastDigit(uint8_t digits) {
-    // Designed as a compromise between code size and speed
-    switch (digits) {
-      case 0:
-        return 1e-0;
-      case 1:
-        return 1e-1;
-      case 2:
-        return 1e-2;
-      case 3:
-        return 1e-3;
-      default:
-        return getLastDigit(uint8_t(digits - 4)) * 1e-4;
-    }
-  }
-
-  FORCE_INLINE static JsonFloat getRoundingBias(uint8_t digits) {
-    return 0.5 * getLastDigit(digits);
-  }
 };
 }
 }

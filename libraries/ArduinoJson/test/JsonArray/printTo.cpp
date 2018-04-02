@@ -1,9 +1,6 @@
-// Copyright Benoit Blanchon 2014-2017
+// ArduinoJson - arduinojson.org
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
-//
-// Arduino JSON library
-// https://bblanchon.github.io/ArduinoJson/
-// If you like this project, please add a star!
 
 #include <ArduinoJson.h>
 #include <catch.hpp>
@@ -11,10 +8,10 @@
 static void check(JsonArray &array, std::string expected) {
   std::string actual;
   size_t actualLen = array.printTo(actual);
-  size_t measuredLen = array.measureLength();
-  CHECK(actualLen == expected.size());
-  CHECK(measuredLen == expected.size());
   REQUIRE(expected == actual);
+  REQUIRE(actualLen == expected.size());
+  size_t measuredLen = array.measureLength();
+  REQUIRE(measuredLen == expected.size());
 }
 
 TEST_CASE("JsonArray::printTo()") {
@@ -52,29 +49,9 @@ TEST_CASE("JsonArray::printTo()") {
     check(array, "[\"hello\",\"world\"]");
   }
 
-  SECTION("OneDoubleDefaultDigits") {
-    array.add(3.14159265358979323846);
-    check(array, "[3.14]");
-  }
-
-  SECTION("OneDoubleFourDigits") {
-    array.add(3.14159265358979323846, 4);
-    check(array, "[3.1416]");
-  }
-
-  SECTION("OneDoubleFourDigits_AlternativeSyntax") {
-    array.add(double_with_n_digits(3.14159265358979323846, 4));
-    check(array, "[3.1416]");
-  }
-
-  SECTION("OneFloatDefaultDigits") {
-    array.add(3.14159f);
-    check(array, "[3.14]");
-  }
-
-  SECTION("OneFloatFourDigits") {
-    array.add(3.14159f, 4);
-    check(array, "[3.1416]");
+  SECTION("One double") {
+    array.add(3.1415927);
+    check(array, "[3.1415927]");
   }
 
   SECTION("OneInteger") {
@@ -90,10 +67,20 @@ TEST_CASE("JsonArray::printTo()") {
     check(array, "[1,2]");
   }
 
-  SECTION("RawJson") {
+  SECTION("RawJson(const char*)") {
     array.add(RawJson("{\"key\":\"value\"}"));
 
     check(array, "[{\"key\":\"value\"}]");
+  }
+
+  SECTION("RawJson(char*)") {
+    DynamicJsonBuffer jb2;
+    JsonArray &arr = jb2.createArray();
+
+    char tmp[] = "{\"key\":\"value\"}";
+    arr.add(RawJson(tmp));
+
+    check(arr, "[{\"key\":\"value\"}]");
   }
 
   SECTION("OneIntegerOverCapacity") {

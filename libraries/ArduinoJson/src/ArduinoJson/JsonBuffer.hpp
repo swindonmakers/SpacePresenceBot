@@ -1,9 +1,6 @@
-// Copyright Benoit Blanchon 2014-2017
+// ArduinoJson - arduinojson.org
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
-//
-// Arduino JSON library
-// https://bblanchon.github.io/ArduinoJson/
-// If you like this project, please add a star!
 
 #pragma once
 
@@ -11,19 +8,10 @@
 #include <stdint.h>  // for uint8_t
 #include <string.h>
 
+#include "Data/NonCopyable.hpp"
 #include "JsonVariant.hpp"
 #include "TypeTraits/EnableIf.hpp"
 #include "TypeTraits/IsArray.hpp"
-
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wnon-virtual-dtor"
-#elif defined(__GNUC__)
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
-#pragma GCC diagnostic push
-#endif
-#pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
-#endif
 
 namespace ArduinoJson {
 class JsonArray;
@@ -34,13 +22,8 @@ class JsonObject;
 // Handle the memory management (done in derived classes) and calls the parser.
 // This abstract class is implemented by StaticJsonBuffer which implements a
 // fixed memory allocation.
-class JsonBuffer {
+class JsonBuffer : Internals::NonCopyable {
  public:
-  // CAUTION: NO VIRTUAL DESTRUCTOR!
-  // If we add a virtual constructor the Arduino compiler will add malloc() and
-  // free() to the binary, adding 706 useless bytes.
-  // virtual ~JsonBuffer() {}
-
   // Allocates an empty JsonArray.
   //
   // Returns a reference to the new JsonArray or JsonArray::invalid() if the
@@ -55,20 +38,21 @@ class JsonBuffer {
 
   // Duplicates a string
   //
-  // char* strdup(TValue);
+  // const char* strdup(TValue);
   // TValue = const std::string&, const String&,
   template <typename TString>
-  typename TypeTraits::EnableIf<!TypeTraits::IsArray<TString>::value,
-                                char *>::type
-  strdup(const TString &src) {
+  DEPRECATED("char* are duplicated, you don't need strdup() anymore")
+  typename Internals::EnableIf<!Internals::IsArray<TString>::value,
+                               const char *>::type strdup(const TString &src) {
     return Internals::StringTraits<TString>::duplicate(src, this);
   }
   //
-  // char* strdup(TValue);
-  // TValue = const char*, const char[N], const FlashStringHelper*
+  // const char* strdup(TValue);
+  // TValue = char*, const char*, const FlashStringHelper*
   template <typename TString>
-  char *strdup(const TString *src) {
-    return Internals::StringTraits<const TString *>::duplicate(src, this);
+  DEPRECATED("char* are duplicated, you don't need strdup() anymore")
+  const char *strdup(TString *src) {
+    return Internals::StringTraits<TString *>::duplicate(src, this);
   }
 
   // Allocates n bytes in the JsonBuffer.
@@ -76,6 +60,11 @@ class JsonBuffer {
   virtual void *alloc(size_t size) = 0;
 
  protected:
+  // CAUTION: NO VIRTUAL DESTRUCTOR!
+  // If we add a virtual constructor the Arduino compiler will add malloc()
+  // and free() to the binary, adding 706 useless bytes.
+  ~JsonBuffer() {}
+
   // Preserve aligment if necessary
   static FORCE_INLINE size_t round_size_up(size_t bytes) {
 #if ARDUINOJSON_ENABLE_ALIGNMENT
@@ -87,11 +76,3 @@ class JsonBuffer {
   }
 };
 }
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#elif defined(__GNUC__)
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
-#pragma GCC diagnostic pop
-#endif
-#endif

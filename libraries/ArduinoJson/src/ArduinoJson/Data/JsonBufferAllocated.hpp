@@ -1,9 +1,6 @@
-// Copyright Benoit Blanchon 2014-2017
+// ArduinoJson - arduinojson.org
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
-//
-// Arduino JSON library
-// https://bblanchon.github.io/ArduinoJson/
-// If you like this project, please add a star!
 
 #pragma once
 
@@ -19,7 +16,7 @@ class JsonBufferAllocated {
     return jsonBuffer->alloc(n);
   }
 
-  void operator delete(void *, JsonBuffer *)throw() {}
+  void operator delete(void *, JsonBuffer *)throw();
 };
 }
 }

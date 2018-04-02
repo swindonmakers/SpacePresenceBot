@@ -1,9 +1,6 @@
-// Copyright Benoit Blanchon 2014-2017
+// ArduinoJson - arduinojson.org
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
-//
-// Arduino JSON library
-// https://bblanchon.github.io/ArduinoJson/
-// If you like this project, please add a star!
 
 #include <ArduinoJson.h>
 #include <catch.hpp>
@@ -76,17 +73,10 @@ TEST_CASE("JsonObject::printTo()") {
     check(obj, "{\"a\":[1,2],\"b\":[4,5]}");
   }
 
-  SECTION("TwoDoublesFourDigits") {
-    obj["a"] = double_with_n_digits(3.14159265358979323846, 4);
-    obj.set("b", 2.71828182845904523536, 4);
-    obj.set("c", double_with_n_digits(3.14159265358979323846, 3));
-    check(obj, "{\"a\":3.1416,\"b\":2.7183,\"c\":3.142}");
-  }
-
-  SECTION("TwoDoubleDefaultDigits") {
-    obj["a"] = 3.14159265358979323846;
-    obj.set("b", 2.71828182845904523536);
-    check(obj, "{\"a\":3.14,\"b\":2.72}");
+  SECTION("Two doubles") {
+    obj["a"] = 12.34;
+    obj.set("b", 56.78);
+    check(obj, "{\"a\":12.34,\"b\":56.78}");
   }
 
   SECTION("TwoNull") {

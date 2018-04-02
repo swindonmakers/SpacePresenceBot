@@ -1,9 +1,6 @@
-// Copyright Benoit Blanchon 2014-2017
+// ArduinoJson - arduinojson.org
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
-//
-// Arduino JSON library
-// https://bblanchon.github.io/ArduinoJson/
-// If you like this project, please add a star!
 
 #include <ArduinoJson.h>
 #include <catch.hpp>
@@ -15,40 +12,35 @@ TEST_CASE("JsonArray::set()") {
   JsonArray& _array = _jsonBuffer.createArray();
   _array.add(0);
 
-  SECTION("SizeIsUnchanged") {
-    _array.set(0, "hello");
-    REQUIRE(1U == _array.size());
-  }
-
-  SECTION("StoreInteger") {
+  SECTION("int") {
     _array.set(0, 123);
     REQUIRE(123 == _array[0].as<int>());
     REQUIRE(_array[0].is<int>());
-    REQUIRE_FALSE(_array[0].is<double>());
+    REQUIRE_FALSE(_array[0].is<bool>());
   }
 
-  SECTION("StoreDouble") {
+  SECTION("double") {
     _array.set(0, 123.45);
     REQUIRE(123.45 == _array[0].as<double>());
     REQUIRE(_array[0].is<double>());
     REQUIRE_FALSE(_array[0].is<int>());
   }
 
-  SECTION("StoreBoolean") {
+  SECTION("bool") {
     _array.set(0, true);
     REQUIRE(true == _array[0].as<bool>());
     REQUIRE(_array[0].is<bool>());
     REQUIRE_FALSE(_array[0].is<int>());
   }
 
-  SECTION("StoreString") {
+  SECTION("const char*") {
     _array.set(0, "hello");
     REQUIRE_THAT(_array[0].as<const char*>(), Equals("hello"));
     REQUIRE(_array[0].is<const char*>());
     REQUIRE_FALSE(_array[0].is<int>());
   }
 
-  SECTION("StoreNestedArray") {
+  SECTION("nested array") {
     JsonArray& arr = _jsonBuffer.createArray();
 
     _array.set(0, arr);
@@ -58,7 +50,7 @@ TEST_CASE("JsonArray::set()") {
     REQUIRE_FALSE(_array[0].is<int>());
   }
 
-  SECTION("StoreNestedObject") {
+  SECTION("nested object") {
     JsonObject& obj = _jsonBuffer.createObject();
 
     _array.set(0, obj);
@@ -68,7 +60,7 @@ TEST_CASE("JsonArray::set()") {
     REQUIRE_FALSE(_array[0].is<int>());
   }
 
-  SECTION("StoreArraySubscript") {
+  SECTION("array subscript") {
     JsonArray& arr = _jsonBuffer.createArray();
     arr.add("hello");
 
@@ -77,12 +69,30 @@ TEST_CASE("JsonArray::set()") {
     REQUIRE_THAT(_array[0].as<char*>(), Equals("hello"));
   }
 
-  SECTION("StoreObjectSubscript") {
+  SECTION("object subscript") {
     JsonObject& obj = _jsonBuffer.createObject();
     obj["x"] = "hello";
 
     _array.set(0, obj["x"]);
 
     REQUIRE_THAT(_array[0].as<char*>(), Equals("hello"));
+  }
+
+  SECTION("should not duplicate const char*") {
+    _array.set(0, "world");
+    const size_t expectedSize = JSON_ARRAY_SIZE(1);
+    REQUIRE(expectedSize == _jsonBuffer.size());
+  }
+
+  SECTION("should duplicate char*") {
+    _array.set(0, const_cast<char*>("world"));
+    const size_t expectedSize = JSON_ARRAY_SIZE(1) + 6;
+    REQUIRE(expectedSize == _jsonBuffer.size());
+  }
+
+  SECTION("should duplicate std::string") {
+    _array.set(0, std::string("world"));
+    const size_t expectedSize = JSON_ARRAY_SIZE(1) + 6;
+    REQUIRE(expectedSize == _jsonBuffer.size());
   }
 }

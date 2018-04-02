@@ -1,9 +1,6 @@
-// Copyright Benoit Blanchon 2014-2017
+// ArduinoJson - arduinojson.org
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
-//
-// Arduino JSON library
-// https://bblanchon.github.io/ArduinoJson/
-// If you like this project, please add a star!
 
 #pragma once
 
@@ -22,6 +19,7 @@
 #endif
 
 namespace ArduinoJson {
+namespace Internals {
 class DefaultAllocator {
  public:
   void* allocate(size_t size) {
@@ -46,28 +44,39 @@ class DynamicJsonBufferBase
   };
 
  public:
+  enum { EmptyBlockSize = sizeof(EmptyBlock) };
+
   DynamicJsonBufferBase(size_t initialSize = 256)
       : _head(NULL), _nextBlockCapacity(initialSize) {}
 
   ~DynamicJsonBufferBase() {
-    Block* currentBlock = _head;
-
-    while (currentBlock != NULL) {
-      Block* nextBlock = currentBlock->next;
-      _allocator.deallocate(currentBlock);
-      currentBlock = nextBlock;
-    }
+    clear();
   }
 
+  // Gets the number of bytes occupied in the buffer
   size_t size() const {
     size_t total = 0;
     for (const Block* b = _head; b; b = b->next) total += b->size;
     return total;
   }
 
+  // Allocates the specified amount of bytes in the buffer
   virtual void* alloc(size_t bytes) {
     alignNextAlloc();
     return canAllocInHead(bytes) ? allocInHead(bytes) : allocInNewBlock(bytes);
+  }
+
+  // Resets the buffer.
+  // USE WITH CAUTION: this invalidates all previously allocated data
+  void clear() {
+    Block* currentBlock = _head;
+    while (currentBlock != NULL) {
+      _nextBlockCapacity = currentBlock->capacity;
+      Block* nextBlock = currentBlock->next;
+      _allocator.deallocate(currentBlock);
+      currentBlock = nextBlock;
+    }
+    _head = 0;
   }
 
   class String {
@@ -98,7 +107,7 @@ class DynamicJsonBufferBase
    private:
     DynamicJsonBufferBase* _parent;
     char* _start;
-    int _length;
+    size_t _length;
   };
 
   String startString() {
@@ -129,7 +138,7 @@ class DynamicJsonBufferBase
   }
 
   bool addNewBlock(size_t capacity) {
-    size_t bytes = sizeof(EmptyBlock) + capacity;
+    size_t bytes = EmptyBlockSize + capacity;
     Block* block = static_cast<Block*>(_allocator.allocate(bytes));
     if (block == NULL) return false;
     block->capacity = capacity;
@@ -143,6 +152,7 @@ class DynamicJsonBufferBase
   Block* _head;
   size_t _nextBlockCapacity;
 };
+}
 
 #if defined(__clang__)
 #pragma clang diagnostic pop
@@ -155,5 +165,6 @@ class DynamicJsonBufferBase
 // Implements a JsonBuffer with dynamic memory allocation.
 // You are strongly encouraged to consider using StaticJsonBuffer which is much
 // more suitable for embedded systems.
-typedef DynamicJsonBufferBase<DefaultAllocator> DynamicJsonBuffer;
+typedef Internals::DynamicJsonBufferBase<Internals::DefaultAllocator>
+    DynamicJsonBuffer;
 }

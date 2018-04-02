@@ -1,9 +1,6 @@
-// Copyright Benoit Blanchon 2014-2017
+// ArduinoJson - arduinojson.org
+// Copyright Benoit Blanchon 2014-2018
 // MIT License
-//
-// Arduino JSON library
-// https://bblanchon.github.io/ArduinoJson/
-// If you like this project, please add a star!
 
 #include <ArduinoJson.h>
 #include <catch.hpp>
@@ -29,7 +26,7 @@ TEST_CASE("JsonBuffer::parse()") {
     JsonVariant variant = jb.parse("-42");
     REQUIRE(variant.success());
     REQUIRE(variant.is<int>());
-    REQUIRE_FALSE(variant.is<double>());
+    REQUIRE_FALSE(variant.is<bool>());
     REQUIRE(variant == -42);
   }
 
