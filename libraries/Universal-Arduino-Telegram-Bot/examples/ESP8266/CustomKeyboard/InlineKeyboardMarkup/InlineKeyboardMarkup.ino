@@ -1,8 +1,8 @@
 /*******************************************************************
- *  An example of how to use a custom reply keyboard markup.       *
- *                                                                 *
- *                                                                 *
- *  written by Vadim Sinitski                                      *
+    An example of how to use a custom reply keyboard markup.
+
+
+     written by Vadim Sinitski (modified by Brian Lough)
  *******************************************************************/
 #include <ESP8266WiFi.h>
 #include <WiFiClientSecure.h>
@@ -22,27 +22,35 @@ int Bot_mtbs = 1000; //mean time between scan messages
 long Bot_lasttime;   //last time messages' scan has been done
 
 void handleNewMessages(int numNewMessages) {
-  Serial.println("handleNewMessages");
-  Serial.println(String(numNewMessages));
 
-  for (int i=0; i<numNewMessages; i++) {
-    String chat_id = String(bot.messages[i].chat_id);
-    String text = bot.messages[i].text;
+  for (int i = 0; i < numNewMessages; i++) {
 
-    String from_name = bot.messages[i].from_name;
-    if (from_name == "") from_name = "Guest";
+    // Inline buttons with callbacks when pressed will raise a callback_query message
+    if (bot.messages[i].type == "callback_query") {
+      Serial.print("Call back button pressed by: ");
+      Serial.println(bot.messages[i].from_id);
+      Serial.print("Data on the button: ");
+      Serial.println(bot.messages[i].text);
+      bot.sendMessage(bot.messages[i].from_id, bot.messages[i].text, "");
+    } else {
+      String chat_id = String(bot.messages[i].chat_id);
+      String text = bot.messages[i].text;
 
-    if (text == "/options") {
-      String keyboardJson = "[[\{ \"text\" : \"Go to Google\", \"url\" : \"https://www.google.com\" \} ]]";
-      bot.sendMessageWithInlineKeyboard(chat_id, "Choose from one of the following options", "", keyboardJson);
-    }
+      String from_name = bot.messages[i].from_name;
+      if (from_name == "") from_name = "Guest";
 
-    if (text == "/start") {
-      String welcome = "Welcome to Universal Arduino Telegram Bot library, " + from_name + ".\n";
-      welcome += "This is Inline Keyboard Markup example.\n\n";
-      welcome += "/options : returns the inline keyboard\n";
+      if (text == "/options") {
+        String keyboardJson = "[[{ \"text\" : \"Go to Google\", \"url\" : \"https://www.google.com\" }],[{ \"text\" : \"Send\", \"callback_data\" : \"This was sent by inline\" }]]";
+        bot.sendMessageWithInlineKeyboard(chat_id, "Choose from one of the following options", "", keyboardJson);
+      }
 
-      bot.sendMessage(chat_id, welcome, "Markdown");
+      if (text == "/start") {
+        String welcome = "Welcome to Universal Arduino Telegram Bot library, " + from_name + ".\n";
+        welcome += "This is Inline Keyboard Markup example.\n\n";
+        welcome += "/options : returns the inline keyboard\n";
+
+        bot.sendMessage(chat_id, welcome, "Markdown");
+      }
     }
   }
 }
@@ -75,7 +83,7 @@ void loop() {
   if (millis() > Bot_lasttime + Bot_mtbs)  {
     int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
 
-    while(numNewMessages) {
+    while (numNewMessages) {
       Serial.println("got response");
       handleNewMessages(numNewMessages);
       numNewMessages = bot.getUpdates(bot.last_message_received + 1);
