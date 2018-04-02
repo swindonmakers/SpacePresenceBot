@@ -42,6 +42,7 @@
 #include <LCD.h>
 #include <LiquidCrystal_I2C.h>
 #include <AnalogMultiButton.h>
+#include "FS.h"
 
 #define RST_PIN  16 // RST-PIN for RC522 - RFID - SPI - Modul GPIO5 
 #define SS_PIN  2 // SDA-PIN for RC522 - RFID - SPI - Modul GPIO4 
@@ -80,6 +81,8 @@ AnalogMultiButton buttons(A0, BUTTONS_TOTAL, BUTTONS_VALUES);
 
 int stayTime = 0;
 bool checkout = false;
+String customName;
+bool clearCustomName = false;
 
 String formatNumber(int x)
 {
@@ -109,6 +112,12 @@ void processTelegramMessages(int numNewMessages) {
 
     String from_name = bot.messages[i].from_name;
     if (from_name == "") from_name = "Guest";
+    String from_id = bot.messages[i].from_id;
+
+    Serial.print("chat_id:"); Serial.println(chat_id);
+    Serial.print("from_name:"); Serial.println(from_name);
+    Serial.print("from_id:"); Serial.println(from_id);
+    Serial.print("text:"); Serial.println(text);
 
     if (text == "/chatid") {
       bot.sendMessage(chat_id, "The chat_id is: " + String(chat_id), "");
@@ -132,7 +141,22 @@ void processTelegramMessages(int numNewMessages) {
       mfrc522.PCD_Init();
       yield();
       bot.sendMessage(chat_id, "Reader init done", "");
-     
+
+    } else if (text.startsWith("/callme")) {
+      int i = text.indexOf(' ');
+      if (i > 0) {
+        customName = text.substring(i+1);
+        bot.sendMessage(chat_id, "Okay, " + customName + ", please scan your card on the reader now. (Or let the display timeout to cancel)");
+        lcdTwoLine("Scan your token", customName);
+      } else {
+        bot.sendMessage(chat_id, "If you'd like me to call you something else, please tell me what (eg /callme A.Maker) and then scan your card on the reader when prompted.");
+      }
+
+    } else if (text.startsWith("/resetname")) {
+      clearCustomName = true;
+      bot.sendMessage(chat_id, "Okay, please scan your card on the reader now to clear your custom moniker. (Or let the display timeout to cancel)");
+      lcdTwoLine("Scan your token", "to reset name.");
+
     } else {
       // unknown message
     }
@@ -255,19 +279,64 @@ void processToken(String token)
       if (payload == "<No such person>") {
         Serial.println(token + " returned <no such person>");
         lcdTwoLine("Sorry, I don't", "know you.");
+
       } else {
         Serial.println(token + " identified as " + payload);
 
-        if (checkout) {
-          lcdTwoLine("Goodbye", payload);
-          bot.sendMessage(GROUP_CHAT_ID, payload + " has left the space.", "");
+        if (customName != "") {
+          // Save custom name
+          if (SPIFFS.exists("/" + token))
+            SPIFFS.remove("/" + token);
+          File f = SPIFFS.open("/" + token, "w");
+          if (f) {
+            f.print(customName);
+            f.print("\n");
+            f.print(payload);
+            f.print("\n");
+            f.close();
+            lcdTwoLine("Name saved", "");
+          } else {
+            lcdTwoLine("Error saving name", "Sorry.");
+          }
+
+          customName = "";
+        
+        } else if (clearCustomName) {
+          // Remove custom name
+          if (SPIFFS.exists("/" + token)) {
+            SPIFFS.remove("/" + token);
+            lcdTwoLine("Name reset to", "default.");
+          }
+
+          clearCustomName = false;
 
         } else {
-          lcdTwoLine("Welcome!", payload);
-          if (stayTime > 0)
-            bot.sendMessage(GROUP_CHAT_ID, payload + " has arrived in the space and will be around for about " + String(stayTime) + " hours", "");
-          else 
-            bot.sendMessage(GROUP_CHAT_ID, payload + " has arrived in the space.", "");
+          // Process checkin/out
+
+          // Try get custom name
+          String name = "";
+          if (SPIFFS.exists("/" + token)) {
+            Serial.println("Found custom name");
+            File f = SPIFFS.open("/" + token, "r");
+            if (f) {
+              name = f.readStringUntil('\n');
+              f.close();
+            }
+          }
+          if (name == "" || name == NULL)
+            name = payload;
+
+          if (checkout) {
+            lcdTwoLine("Goodbye", name);
+            bot.sendMessage(GROUP_CHAT_ID, payload + " has left the space.", "");
+
+          } else {
+            lcdTwoLine("Welcome!", name);
+            if (stayTime > 0)
+              bot.sendMessage(GROUP_CHAT_ID, name + " has arrived in the space and will be around for about " + String(stayTime) + " hours", "");
+            else 
+              bot.sendMessage(GROUP_CHAT_ID, name + " has arrived in the space.", "");
+          }
         }
       }
     } else {
@@ -334,6 +403,8 @@ void setup()
 
   SPI.begin();
   mfrc522.PCD_Init();    // Init MFRC522
+
+  SPIFFS.begin();
 
   lcdTwoLine("Present id card", "to check-in.");
   lcdOffTime = millis() + 10000;
@@ -409,6 +480,8 @@ void loop()
     lastToken = "";
     stayTime = 0;
     checkout = false;
+    customName = "";
+    clearCustomName = false;
   }
 
   // LCD Backlight timeout
@@ -419,5 +492,7 @@ void loop()
     lcdOffTime = 0;
     stayTime = 0;
     checkout = false;
+    customName = "";
+    clearCustomName = false;
   }
 }
