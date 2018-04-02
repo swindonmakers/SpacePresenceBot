@@ -6,6 +6,8 @@
 
 // Telegram Group Id to send admin messages to
 #define ADMIN_CHAT_ID ""
+// Telegram User Id who is admin
+#define ADMIN_ID ""
 
 // URL to the access system for getting name from ID tag 
 #define ACCESS_SYSTEM_HOST ""

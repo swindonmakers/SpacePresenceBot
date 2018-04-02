@@ -146,7 +146,7 @@ void processTelegramMessages(int numNewMessages) {
       bot.sendMessage(chat_id, "Okay, please scan your card on the reader now to clear your custom moniker. (Or let the display timeout to cancel)");
       lcdTwoLine("Scan your token", "to reset name.");
 
-    } else if (text.startsWith("/shownames")) {
+    } else if (text.startsWith("/shownames") && from_id == ADMIN_ID) {
       String message;
       Dir dir = SPIFFS.openDir("/");
       while (dir.next()) {
@@ -160,7 +160,7 @@ void processTelegramMessages(int numNewMessages) {
       }
       bot.sendMessage(chat_id, message, "Markdown");
 
-    } else if (text.startsWith("/remove")) {
+    } else if (text.startsWith("/remove") && from_id == ADMIN_ID) {
       int i = text.indexOf(' ');
       if (i > 0) {
         String tokenToRemove = text.substring(i+1);
@@ -172,7 +172,7 @@ void processTelegramMessages(int numNewMessages) {
         }
       }
 
-    } else if (text.startsWith("/debugdata")) {
+    } else if (text.startsWith("/debugdata") && from_id == ADMIN_ID) {
       Serial.println(F("Build debug message"));
       String message = "Millis: " + String(millis());
       message += "\n Last Telegram: " + String(telegramLastCheck);
@@ -358,7 +358,7 @@ void processToken(String token)
 
           if (checkout) {
             lcdTwoLine("Goodbye", name);
-            bot.sendMessage(GROUP_CHAT_ID, payload + " has left the space.", "");
+            bot.sendMessage(GROUP_CHAT_ID, name + " has left the space.", "");
 
           } else {
             lcdTwoLine("Welcome!", name);
