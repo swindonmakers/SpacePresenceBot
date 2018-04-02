@@ -57,6 +57,8 @@ UniversalTelegramBot bot(BOTtoken, client);
 MFRC522 mfrc522(SS_PIN, RST_PIN); 
 
 time_t bootTime = 0; // boot time
+unsigned long lastDebug; // last time debug messages were send to serial
+#define DEBUG_INTERVAL 5000
 
 unsigned long telegramLastCheck; // last time telegram messages poll completed
 
@@ -179,10 +181,10 @@ void processTelegramMessages(int numNewMessages) {
       String message = "Millis: " + String(millis());
       message += "\nTime: " + formatTime(ntp.localNow());
       message += "\nBootTime: " + formatTime(bootTime);
+      message += "\nFreeHeap: " + String(ESP.getFreeHeap());
       message += "\nLast Telegram: " + String(telegramLastCheck);
       message += "\nLast Reader: " + String(cardreaderLastCheck);
       message += "\nLast Token:" + String(lastTokenTime);
-      
       
       bot.sendMessage(chat_id, message, "Markdown");
 
@@ -447,10 +449,16 @@ void setup()
 
 void loop() 
 {
+  // Debug
+  if (millis() > lastDebug + DEBUG_INTERVAL) {
+    //Serial.println(ESP.getFreeHeap());
+    lastDebug = millis();
+  }
+
   // Housekeeping
   pka.loop();
   ntp.loop();
-  if (timeStatus() == timeSet && bootTime == 0)
+  if (bootTime == 0 && timeStatus() == timeSet)
     bootTime = ntp.localNow();
 
   // Buttons
