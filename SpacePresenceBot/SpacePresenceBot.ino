@@ -232,6 +232,8 @@ void processTelegramMessages(int numNewMessages) {
       reply.concat(from_name);
       reply.concat(F(", I'm the Space Presence Bot and I'll announce your name on Telegram when you "));
       reply.concat(F("scan your access token on the Makerspace Check-in hardware by the door.\n"));
+      bot.sendMessage(chat_id, reply, F("Markdown"));
+      reply = "";
       reply.concat(F("If you'd like me to use a moniker other than the name you used when you signed up to the Makerspace you "));
       reply.concat(F("can use the /callme command to set a custom name.  You can always clear whatever you set by using the "));
       reply.concat(F("/resetname command.  Note that for both of these commands you also need to scan your token so make sure "));
@@ -326,7 +328,7 @@ void processTelegramMessages(int numNewMessages) {
       reply.concat(telegramLastCheck);
       reply.concat(F("\nLast Reader: "));
       reply.concat(cardreaderLastCheck);
-      reply.concat(F("\nLast Token:"));
+      reply.concat(F("\nLast Token: "));
       reply.concat(lastTokenTime);
       
       bot.sendMessage(chat_id, reply, F("Markdown"));
