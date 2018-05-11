@@ -139,7 +139,7 @@ void initCheckinCache()
 
 void updateCheckinCache()
 {
-  time_t tcurr = now();
+  time_t tcurr = ntp.localNow();
   for (int i=0; i<CHECKIN_CACHE_SIZE; i++) {
     if (checkinCache[i].current) {
       // check still current
@@ -160,7 +160,7 @@ void addToCheckinCache(String token, String name, time_t checkinTime, int stayTi
   int existsAt = -1;
   int nextFreeIdx = -1;
   int oldestIdx = -1;
-  time_t oldestTime = now();
+  time_t oldestTime = ntp.localNow();
 
   // scan cache to see if (a) already in (b) find next free slot (c) find oldest entry 
   for (int i=0; i<CHECKIN_CACHE_SIZE; i++) {
@@ -315,6 +315,7 @@ void processTelegramMessages(int numNewMessages) {
     } else if (text.startsWith(F("/debugdata")) && from_id == ADMIN_ID) {
       Serial.println(F("Build debug message"));
       reply.concat(F("Millis: "));
+      reply.concat(millis());
       reply.concat(F("\nTime: ")); 
       reply.concat(formatTime(ntp.localNow()));
       reply.concat(F("\nBootTime: "));
@@ -512,7 +513,7 @@ void processToken(String token)
 
           } else {
             lcdTwoLine("Welcome!", name);
-            addToCheckinCache(token, name, now(), stayTime);
+            addToCheckinCache(token, name, ntp.localNow(), stayTime);
             if (stayTime > 0)
               bot.sendMessage(GROUP_CHAT_ID, name + " has arrived in the space and will be around for about " + String(stayTime) + " hours", "");
             else 
