@@ -270,11 +270,15 @@ void processTelegramMessages(int numNewMessages) {
       int i = originalMessage.indexOf(' ');
       if (i > 0) {
         customName = originalMessage.substring(i+1);
-        reply.concat(F("Okay, "));
-        reply.concat(customName);
-        reply.concat(F(", please scan your card on the reader now. (Or let the display timeout to cancel)"));
-        bot.sendMessage(chat_id, reply);
-        lcdTwoLine("Scan your token", customName);
+        if (customName.length() > 50) {
+          bot.sendMessage(chat_id, F("Sorry, I only have a tiny brain.  Please choose a name less than 50 characters long."));
+        } else {
+          reply.concat(F("Okay, "));
+          reply.concat(customName);
+          reply.concat(F(", please scan your card on the reader now. (Or let the display timeout to cancel)"));
+          bot.sendMessage(chat_id, reply);
+          lcdTwoLine("Scan your token", customName);
+        }
       } else {
         bot.sendMessage(chat_id, F("If you'd like me to call you something else, please tell me what (eg /callme A.Maker) and then scan your card on the reader when prompted."));
       }
