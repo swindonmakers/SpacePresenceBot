@@ -139,15 +139,28 @@ void initCheckinCache()
 
 void updateCheckinCache()
 {
+  Serial.print(F("Updataing checkin cache, tcurr="));
   time_t tcurr = ntp.localNow();
+  Serial.println(tcurr);
+  
   for (int i=0; i<CHECKIN_CACHE_SIZE; i++) {
     if (checkinCache[i].current) {
+      Serial.print(F("Updating item "));
+      Serial.print(i);
+      Serial.print(F(":"));
+      Serial.print(checkinCache[i].name);
+      Serial.print(F(" -> "));
+      Serial.print(checkinCache[i].checkinTime);
       // check still current
-      int32_t diff = (tcurr - checkinCache[i].checkinTime) / 3600;
       int stayTime = checkinCache[i].stayTime > 0 ? checkinCache[i].stayTime : 6; // assume stay length if not specified
+      Serial.print(F(" stay:"));
+      Serial.print(stayTime);
       
-      if (diff > stayTime) {
+      if (checkinCache[i].checkinTime + 3600 * stayTime < tcurr) {
+        Serial.println(F(" - removing from cache."));
         clearCheckinCacheEntry(i);
+      } else {
+        Serial.println(F(" - still in"));
       }
     }
   }
@@ -201,7 +214,7 @@ void removeFromCheckinCache(String token)
 {
   for (int i=0; i<CHECKIN_CACHE_SIZE; i++) {
     if (checkinCache[i].token == token) {
-      checkinCache[i].current = false;
+      clearCheckinCacheEntry(i);
       break;
     }
   }
@@ -230,7 +243,7 @@ void processTelegramMessages(int numNewMessages) {
       Serial.println(F("Build welcome message"));
       reply.concat(F("Hello "));
       reply.concat(from_name);
-      reply.concat(F(", I'm the Space Presence Bot and I'll announce your name on Telegram when you "));
+      reply.concat(F(", I'm the Inner Space Bot and I'll announce your name on Telegram when you "));
       reply.concat(F("scan your access token on the Makerspace Check-in hardware by the door.\n"));
       bot.sendMessage(chat_id, reply, F("Markdown"));
       reply = "";
