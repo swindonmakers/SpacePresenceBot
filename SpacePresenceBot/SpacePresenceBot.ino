@@ -1,4 +1,8 @@
 /* 
+  Flash settings:
+    NodeMcu
+    4M (3M SPIFFS)
+  
   Connections:
 
   NodeMCU <-> Switch Array
@@ -74,6 +78,18 @@ unsigned long lcdOffTime = 0; // next time (in millis()) when we should turn off
 char tokenStr[14]; // token as hex string
 String lastToken; // last token as string
 
+struct CheckinRecord
+{
+  String token;
+  String name;
+  time_t checkinTime;
+  int stayTime;
+  bool current;
+};
+
+#define CHECKIN_CACHE_SIZE 10
+CheckinRecord checkinCache[CHECKIN_CACHE_SIZE];
+
 const int BUTTONS_TOTAL = 5;
 
 // find out what the value of analogRead is when you press each of your buttons and put them in this array
@@ -106,9 +122,95 @@ String formatTime(time_t t)
     + ":" + String(formatNumber(second(t)));
 }
 
+void clearCheckinCacheEntry(int i)
+{
+    checkinCache[i].token = "";
+    checkinCache[i].name = "";
+    checkinCache[i].checkinTime = 0;
+    checkinCache[i].stayTime = 0;
+    checkinCache[i].current = false;
+}
+
+void initCheckinCache()
+{
+  for (int i=0; i<CHECKIN_CACHE_SIZE; i++)
+    clearCheckinCacheEntry(i);
+}
+
+void updateCheckinCache()
+{
+  time_t tcurr = now();
+  for (int i=0; i<CHECKIN_CACHE_SIZE; i++) {
+    if (checkinCache[i].current) {
+      // check still current
+      int32_t diff = (tcurr - checkinCache[i].checkinTime) / 3600;
+      int stayTime = checkinCache[i].stayTime > 0 ? checkinCache[i].stayTime : 6; // assume stay length if not specified
+      
+      if (diff > stayTime) {
+        clearCheckinCacheEntry(i);
+      }
+    }
+  }
+}
+
+void addToCheckinCache(String token, String name, time_t checkinTime, int stayTime)
+{
+  updateCheckinCache();
+
+  int existsAt = -1;
+  int nextFreeIdx = -1;
+  int oldestIdx = -1;
+  time_t oldestTime = now();
+
+  // scan cache to see if (a) already in (b) find next free slot (c) find oldest entry 
+  for (int i=0; i<CHECKIN_CACHE_SIZE; i++) {
+    if (checkinCache[i].token == token) {
+      existsAt = i;
+      break; // we've found a slot, exit early
+    }
+    else if (nextFreeIdx == -1 && !checkinCache[i].current) {
+      nextFreeIdx = i;
+    }
+    else if (checkinCache[i].checkinTime < oldestTime) {
+      oldestTime = checkinCache[i].checkinTime;
+      oldestIdx = i;
+    }
+  }
+
+  // work out best cache index to update - existing entry, next free or oldest
+  int idx = -1;
+  if (existsAt != -1)
+    idx = existsAt;
+  else if (nextFreeIdx != -1)
+    idx = nextFreeIdx;
+  else
+    idx = oldestIdx;
+
+  if (idx == -1) // err, somethings up.
+    return;
+
+  // update cache entry
+  checkinCache[idx].token = token;
+  checkinCache[idx].name = name;
+  checkinCache[idx].checkinTime = checkinTime;
+  checkinCache[idx].stayTime = stayTime;
+  checkinCache[idx].current = true;
+}
+
+void removeFromCheckinCache(String token)
+{
+  for (int i=0; i<CHECKIN_CACHE_SIZE; i++) {
+    if (checkinCache[i].token == token) {
+      checkinCache[i].current = false;
+      break;
+    }
+  }
+}
+
 void processTelegramMessages(int numNewMessages) {
   Serial.print(F("Telegram message received:"));
   Serial.println(numNewMessages);
+  String reply = "";
 
   for (int i=0; i<numNewMessages; i++) {
     String chat_id = String(bot.messages[i].chat_id);
@@ -119,80 +221,120 @@ void processTelegramMessages(int numNewMessages) {
     if (from_name == "") from_name = "Guest";
     String from_id = bot.messages[i].from_id;
 
-    Serial.print("chat_id:"); Serial.println(chat_id);
-    Serial.print("from_name:"); Serial.println(from_name);
-    Serial.print("from_id:"); Serial.println(from_id);
-    Serial.print("text:"); Serial.println(text);
+    Serial.print(F("chat_id:")); Serial.println(chat_id);
+    Serial.print(F("from_name:")); Serial.println(from_name);
+    Serial.print(F("from_id:")); Serial.println(from_id);
+    Serial.print(F("text:")); Serial.println(text);
 
-    if (text.startsWith("/start") || text.startsWith("/about")) {
+    if (text.startsWith(F("/start")) || text.startsWith(F("/help"))) {
       Serial.println(F("Build welcome message"));
-      String welcome = "Hello " + from_name + ", I'm the Space Presence Bot and I'll announce your name on Telegram when you ";
-      welcome += "scan your access token on the Makerspace Check-in hardware by the door.\n";
-      welcome += "If you'd like me to use a moniker other than the name you used when you signed up to the Makerspace you ";
-      welcome += "can use the /callme command to set a custom name.  You can always clear whatever you set by using the ";
-      welcome += "/resetname command.  Note that for both of these commands you also need to scan your token so make sure ";
-      welcome += "you are in the space!";
-      bot.sendMessage(chat_id, welcome, "Markdown");
+      reply.concat(F("Hello "));
+      reply.concat(from_name);
+      reply.concat(F(", I'm the Space Presence Bot and I'll announce your name on Telegram when you "));
+      reply.concat(F("scan your access token on the Makerspace Check-in hardware by the door.\n"));
+      reply.concat(F("If you'd like me to use a moniker other than the name you used when you signed up to the Makerspace you "));
+      reply.concat(F("can use the /callme command to set a custom name.  You can always clear whatever you set by using the "));
+      reply.concat(F("/resetname command.  Note that for both of these commands you also need to scan your token so make sure "));
+      reply.concat(F("you are in the space!"));
+      bot.sendMessage(chat_id, reply, F("Markdown"));
 
-    } else if (text.startsWith("/callme")) {
+    } else if (text.startsWith(F("/whosabout"))) {
+      updateCheckinCache();
+
+      for (int i=0; i<CHECKIN_CACHE_SIZE; i++){
+        if (checkinCache[i].current) {
+          reply.concat(checkinCache[i].name);
+          reply.concat(F(" checked in"));
+          if (checkinCache[i].stayTime > 0) {
+            reply.concat(F(" for "));
+            reply.concat(checkinCache[i].stayTime);
+            reply.concat(F("hrs"));
+          }
+          reply.concat(F(" at "));
+          reply.concat(formatNumber(hour(checkinCache[i].checkinTime)));
+          reply.concat(F(":"));
+          reply.concat(formatNumber(minute(checkinCache[i].checkinTime)));
+          reply.concat(F("\n"));
+        }
+      }
+      
+      if (reply == "")
+        reply.concat(F("No-one is currently checked-in."));
+        
+      bot.sendMessage(chat_id, reply, F("Markdown"));
+
+    } else if (text.startsWith(F("/callme"))) {
       String originalMessage = bot.messages[i].text;
       int i = originalMessage.indexOf(' ');
       if (i > 0) {
         customName = originalMessage.substring(i+1);
-        bot.sendMessage(chat_id, "Okay, " + customName + ", please scan your card on the reader now. (Or let the display timeout to cancel)");
+        reply.concat(F("Okay, "));
+        reply.concat(customName);
+        reply.concat(F(", please scan your card on the reader now. (Or let the display timeout to cancel)"));
+        bot.sendMessage(chat_id, reply);
         lcdTwoLine("Scan your token", customName);
       } else {
-        bot.sendMessage(chat_id, "If you'd like me to call you something else, please tell me what (eg /callme A.Maker) and then scan your card on the reader when prompted.");
+        bot.sendMessage(chat_id, F("If you'd like me to call you something else, please tell me what (eg /callme A.Maker) and then scan your card on the reader when prompted."));
       }
 
-    } else if (text.startsWith("/resetname")) {
+    } else if (text.startsWith(F("/resetname"))) {
       clearCustomName = true;
-      bot.sendMessage(chat_id, "Okay, please scan your card on the reader now to clear your custom moniker. (Or let the display timeout to cancel)");
+      bot.sendMessage(chat_id, F("Okay, please scan your card on the reader now to clear your custom moniker. (Or let the display timeout to cancel)"));
       lcdTwoLine("Scan your token", "to reset name.");
 
-    } else if (text.startsWith("/shownames") && from_id == ADMIN_ID) {
-      String message;
+    } else if (text.startsWith(F("/shownames")) && from_id == ADMIN_ID) {
       Dir dir = SPIFFS.openDir("/");
       while (dir.next()) {
         File f = dir.openFile("r");
         if (f) {
           String moniker = f.readStringUntil('\n');
           String realName = f.readStringUntil('\n');
-          message += realName + " (" + dir.fileName().substring(1) + ") : " + moniker + "\n";
+          reply.concat(realName);
+          reply.concat(F(" ("));
+          reply.concat(dir.fileName().substring(1));
+          reply.concat(F(") : "));
+          reply.concat(moniker);
+          reply.concat(F("\n"));
           f.close();
         }
       }
-      bot.sendMessage(chat_id, message, "Markdown");
+      bot.sendMessage(chat_id, reply, F("Markdown"));
 
-    } else if (text.startsWith("/remove") && from_id == ADMIN_ID) {
+    } else if (text.startsWith(F("/remove")) && from_id == ADMIN_ID) {
       int i = text.indexOf(' ');
       if (i > 0) {
         String tokenToRemove = text.substring(i+1);
         if (SPIFFS.exists("/" + tokenToRemove)) {
           SPIFFS.remove("/" + tokenToRemove);
-          bot.sendMessage(chat_id, "Removed");
+          bot.sendMessage(chat_id, F("Removed"));
         } else {
-          bot.sendMessage(chat_id, "Not found");
+          bot.sendMessage(chat_id, F("Not found"));
         }
       }
 
-    } else if (text.startsWith("/debugdata") && from_id == ADMIN_ID) {
+    } else if (text.startsWith(F("/debugdata")) && from_id == ADMIN_ID) {
       Serial.println(F("Build debug message"));
-      String message = "Millis: " + String(millis());
-      message += "\nTime: " + formatTime(ntp.localNow());
-      message += "\nBootTime: " + formatTime(bootTime);
-      message += "\nFreeHeap: " + String(ESP.getFreeHeap());
-      message += "\nLast Telegram: " + String(telegramLastCheck);
-      message += "\nLast Reader: " + String(cardreaderLastCheck);
-      message += "\nLast Token:" + String(lastTokenTime);
+      reply.concat(F("Millis: "));
+      reply.concat(F("\nTime: ")); 
+      reply.concat(formatTime(ntp.localNow()));
+      reply.concat(F("\nBootTime: "));
+      reply.concat(formatTime(bootTime));
+      reply.concat(F("\nFreeHeap: "));
+      reply.concat(ESP.getFreeHeap());
+      reply.concat(F("\nLast Telegram: "));
+      reply.concat(telegramLastCheck);
+      reply.concat(F("\nLast Reader: "));
+      reply.concat(cardreaderLastCheck);
+      reply.concat(F("\nLast Token:"));
+      reply.concat(lastTokenTime);
       
-      bot.sendMessage(chat_id, message, "Markdown");
+      bot.sendMessage(chat_id, reply, F("Markdown"));
 
-    } else if (text.startsWith("/initreader")) {
+    } else if (text.startsWith(F("/initreader"))) {
       Serial.println(F("Init card reader"));
       mfrc522.PCD_Init();
       yield();
-      bot.sendMessage(chat_id, "Reader init done", "");
+      bot.sendMessage(chat_id, F("Reader init done"), "");
 
     } else {
       // unknown message
@@ -353,7 +495,7 @@ void processToken(String token)
           // Try get custom name
           String name = "";
           if (SPIFFS.exists("/" + token)) {
-            Serial.println("Found custom name");
+            Serial.println(F("Found custom name"));
             File f = SPIFFS.open("/" + token, "r");
             if (f) {
               name = f.readStringUntil('\n');
@@ -365,21 +507,25 @@ void processToken(String token)
 
           if (checkout) {
             lcdTwoLine("Goodbye", name);
+            removeFromCheckinCache(token);
             bot.sendMessage(GROUP_CHAT_ID, name + " has left the space.", "");
 
           } else {
             lcdTwoLine("Welcome!", name);
+            addToCheckinCache(token, name, now(), stayTime);
             if (stayTime > 0)
               bot.sendMessage(GROUP_CHAT_ID, name + " has arrived in the space and will be around for about " + String(stayTime) + " hours", "");
             else 
               bot.sendMessage(GROUP_CHAT_ID, name + " has arrived in the space.", "");
+            
           }
         }
       }
     } else {
-      Serial.print(token + " access server query failed, ");
+      Serial.print(token);
+      Serial.print(F(" access server query failed, "));
       Serial.print(httpCode);
-      Serial.print(" = ");
+      Serial.print(F(" = "));
       Serial.println(http.errorToString(httpCode));
       lcdTwoLine("Sorry I couldn't", "check your id.");
     }
