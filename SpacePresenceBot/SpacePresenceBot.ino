@@ -239,125 +239,138 @@ void processTelegramMessages(int numNewMessages) {
     Serial.print(F("from_id:")); Serial.println(from_id);
     Serial.print(F("text:")); Serial.println(text);
 
-    if (text.startsWith(F("/start")) || text.startsWith(F("/help"))) {
-      Serial.println(F("Build welcome message"));
-      reply.concat(F("Hello "));
-      reply.concat(from_name);
-      reply.concat(F(", I'm the Inner Space Bot and I'll announce your name on Telegram when you "));
-      reply.concat(F("scan your access token on the Makerspace Check-in hardware by the door.\n"));
-      bot.sendMessage(chat_id, reply, F("Markdown"));
-      reply = "";
-      reply.concat(F("If you'd like me to use a moniker other than the name you used when you signed up to the Makerspace you "));
-      reply.concat(F("can use the /callme command to set a custom name.  You can always clear whatever you set by using the "));
-      reply.concat(F("/resetname command.  Note that for both of these commands you also need to scan your token so make sure "));
-      reply.concat(F("you are in the space!"));
-      bot.sendMessage(chat_id, reply, F("Markdown"));
+    // Only process messages from main group, or admin user
+    if (chat_id == GROUP_CHAT_ID || from_id == ADMIN_ID) { 
 
-    } else if (text.startsWith(F("/whosabout"))) {
-      updateCheckinCache();
+      if (text.startsWith(F("/start")) || text.startsWith(F("/help"))) {
+        Serial.println(F("Build welcome message"));
+        reply.concat(F("Hello "));
+        reply.concat(from_name);
+        reply.concat(F(", I'm the Inner Space Bot and I'll announce your name on Telegram when you "));
+        reply.concat(F("scan your access token on the Makerspace Check-in hardware by the door.\n"));
+        bot.sendMessage(chat_id, reply, F("Markdown"));
+        reply = "";
+        reply.concat(F("If you'd like me to use a moniker other than the name you used when you signed up to the Makerspace you "));
+        reply.concat(F("can use the /callme command to set a custom name.  You can always clear whatever you set by using the "));
+        reply.concat(F("/resetname command.  Note that for both of these commands you also need to scan your token so make sure "));
+        reply.concat(F("you are in the space!"));
+        bot.sendMessage(chat_id, reply, F("Markdown"));
 
-      for (int i=0; i<CHECKIN_CACHE_SIZE; i++){
-        if (checkinCache[i].current) {
-          reply.concat(checkinCache[i].name);
-          reply.concat(F(" checked in"));
-          if (checkinCache[i].stayTime > 0) {
-            reply.concat(F(" for "));
-            reply.concat(checkinCache[i].stayTime);
-            reply.concat(F("hrs"));
+      } else if (text.startsWith(F("/whosabout"))) {
+        updateCheckinCache();
+
+        for (int i=0; i<CHECKIN_CACHE_SIZE; i++){
+          if (checkinCache[i].current) {
+            reply.concat(checkinCache[i].name);
+            reply.concat(F(" checked in"));
+            if (checkinCache[i].stayTime > 0) {
+              reply.concat(F(" for "));
+              reply.concat(checkinCache[i].stayTime);
+              reply.concat(F("hrs"));
+            }
+            reply.concat(F(" at "));
+            reply.concat(formatNumber(hour(checkinCache[i].checkinTime)));
+            reply.concat(F(":"));
+            reply.concat(formatNumber(minute(checkinCache[i].checkinTime)));
+            reply.concat(F("\n"));
           }
-          reply.concat(F(" at "));
-          reply.concat(formatNumber(hour(checkinCache[i].checkinTime)));
-          reply.concat(F(":"));
-          reply.concat(formatNumber(minute(checkinCache[i].checkinTime)));
-          reply.concat(F("\n"));
         }
-      }
-      
-      if (reply == "")
-        reply.concat(F("No-one is currently checked-in."));
         
-      bot.sendMessage(chat_id, reply, F("Markdown"));
+        if (reply == "")
+          reply.concat(F("No-one is currently checked-in."));
+          
+        bot.sendMessage(chat_id, reply, F("Markdown"));
 
-    } else if (text.startsWith(F("/callme"))) {
-      String originalMessage = bot.messages[i].text;
-      int i = originalMessage.indexOf(' ');
-      if (i > 0) {
-        customName = originalMessage.substring(i+1);
-        if (customName.length() > 50) {
-          bot.sendMessage(chat_id, F("Sorry, I only have a tiny brain.  Please choose a name less than 50 characters long."));
+      } else if (text.startsWith(F("/callme"))) {
+        String originalMessage = bot.messages[i].text;
+        int i = originalMessage.indexOf(' ');
+        if (i > 0) {
+          customName = originalMessage.substring(i+1);
+          if (customName.length() > 50) {
+            bot.sendMessage(chat_id, F("Sorry, I only have a tiny brain.  Please choose a name less than 50 characters long."));
+          } else {
+            reply.concat(F("Okay, "));
+            reply.concat(customName);
+            reply.concat(F(", please scan your card on the reader now. (Or let the display timeout to cancel)"));
+            bot.sendMessage(chat_id, reply);
+            lcdTwoLine("Scan your token", customName);
+          }
         } else {
-          reply.concat(F("Okay, "));
-          reply.concat(customName);
-          reply.concat(F(", please scan your card on the reader now. (Or let the display timeout to cancel)"));
-          bot.sendMessage(chat_id, reply);
-          lcdTwoLine("Scan your token", customName);
+          bot.sendMessage(chat_id, F("If you'd like me to call you something else, please tell me what (eg /callme A.Maker) and then scan your card on the reader when prompted."));
         }
+
+      } else if (text.startsWith(F("/resetname"))) {
+        clearCustomName = true;
+        bot.sendMessage(chat_id, F("Okay, please scan your card on the reader now to clear your custom moniker. (Or let the display timeout to cancel)"));
+        lcdTwoLine("Scan your token", "to reset name.");
+
+      } else if (text.startsWith(F("/shownames")) && from_id == ADMIN_ID) {
+        Dir dir = SPIFFS.openDir("/");
+        while (dir.next()) {
+          File f = dir.openFile("r");
+          if (f) {
+            String moniker = f.readStringUntil('\n');
+            String realName = f.readStringUntil('\n');
+            reply.concat(realName);
+            reply.concat(F(" ("));
+            reply.concat(dir.fileName().substring(1));
+            reply.concat(F(") : "));
+            reply.concat(moniker);
+            reply.concat(F("\n"));
+            f.close();
+          }
+        }
+        bot.sendMessage(chat_id, reply, F("Markdown"));
+
+      } else if (text.startsWith(F("/remove")) && from_id == ADMIN_ID) {
+        int i = text.indexOf(' ');
+        if (i > 0) {
+          String tokenToRemove = text.substring(i+1);
+          if (SPIFFS.exists("/" + tokenToRemove)) {
+            SPIFFS.remove("/" + tokenToRemove);
+            bot.sendMessage(chat_id, F("Removed"));
+          } else {
+            bot.sendMessage(chat_id, F("Not found"));
+          }
+        }
+
+      } else if (text.startsWith(F("/debugdata")) && from_id == ADMIN_ID) {
+        Serial.println(F("Build debug message"));
+        reply.concat(F("Millis: "));
+        reply.concat(millis());
+        reply.concat(F("\nTime: ")); 
+        reply.concat(formatTime(ntp.localNow()));
+        reply.concat(F("\nBootTime: "));
+        reply.concat(formatTime(bootTime));
+        reply.concat(F("\nFreeHeap: "));
+        reply.concat(ESP.getFreeHeap());
+        reply.concat(F("\nLast Telegram: "));
+        reply.concat(telegramLastCheck);
+        reply.concat(F("\nLast Reader: "));
+        reply.concat(cardreaderLastCheck);
+        reply.concat(F("\nLast Token: "));
+        reply.concat(lastTokenTime);
+        
+        bot.sendMessage(chat_id, reply, F("Markdown"));
+
+      } else if (text.startsWith(F("/initreader"))) {
+        Serial.println(F("Init card reader"));
+        mfrc522.PCD_Init();
+        yield();
+        bot.sendMessage(chat_id, F("Reader init done"), "");
+
       } else {
-        bot.sendMessage(chat_id, F("If you'd like me to call you something else, please tell me what (eg /callme A.Maker) and then scan your card on the reader when prompted."));
+        // unknown message
       }
 
-    } else if (text.startsWith(F("/resetname"))) {
-      clearCustomName = true;
-      bot.sendMessage(chat_id, F("Okay, please scan your card on the reader now to clear your custom moniker. (Or let the display timeout to cancel)"));
-      lcdTwoLine("Scan your token", "to reset name.");
+    } else { // group chat or admin
+      reply.concat(F("*** UNAUTHORISED USAGE ***"));
+      reply.concat(F("\nchat_id:")); reply.concat(chat_id);
+      reply.concat(F("\nfrom_name:")); reply.concat(from_name);
+      reply.concat(F("\nfrom_id:")); reply.concat(from_id);
+      reply.concat(F("\ntext:")); reply.concat(text);
 
-    } else if (text.startsWith(F("/shownames")) && from_id == ADMIN_ID) {
-      Dir dir = SPIFFS.openDir("/");
-      while (dir.next()) {
-        File f = dir.openFile("r");
-        if (f) {
-          String moniker = f.readStringUntil('\n');
-          String realName = f.readStringUntil('\n');
-          reply.concat(realName);
-          reply.concat(F(" ("));
-          reply.concat(dir.fileName().substring(1));
-          reply.concat(F(") : "));
-          reply.concat(moniker);
-          reply.concat(F("\n"));
-          f.close();
-        }
-      }
-      bot.sendMessage(chat_id, reply, F("Markdown"));
-
-    } else if (text.startsWith(F("/remove")) && from_id == ADMIN_ID) {
-      int i = text.indexOf(' ');
-      if (i > 0) {
-        String tokenToRemove = text.substring(i+1);
-        if (SPIFFS.exists("/" + tokenToRemove)) {
-          SPIFFS.remove("/" + tokenToRemove);
-          bot.sendMessage(chat_id, F("Removed"));
-        } else {
-          bot.sendMessage(chat_id, F("Not found"));
-        }
-      }
-
-    } else if (text.startsWith(F("/debugdata")) && from_id == ADMIN_ID) {
-      Serial.println(F("Build debug message"));
-      reply.concat(F("Millis: "));
-      reply.concat(millis());
-      reply.concat(F("\nTime: ")); 
-      reply.concat(formatTime(ntp.localNow()));
-      reply.concat(F("\nBootTime: "));
-      reply.concat(formatTime(bootTime));
-      reply.concat(F("\nFreeHeap: "));
-      reply.concat(ESP.getFreeHeap());
-      reply.concat(F("\nLast Telegram: "));
-      reply.concat(telegramLastCheck);
-      reply.concat(F("\nLast Reader: "));
-      reply.concat(cardreaderLastCheck);
-      reply.concat(F("\nLast Token: "));
-      reply.concat(lastTokenTime);
-      
-      bot.sendMessage(chat_id, reply, F("Markdown"));
-
-    } else if (text.startsWith(F("/initreader"))) {
-      Serial.println(F("Init card reader"));
-      mfrc522.PCD_Init();
-      yield();
-      bot.sendMessage(chat_id, F("Reader init done"), "");
-
-    } else {
-      // unknown message
+      bot.sendMessage(ADMIN_CHAT_ID, reply, F("Markdown"));
     }
   }
 }
