@@ -9,6 +9,11 @@ void RhaNtp::init(IPAddress &timeServerIp, uint8_t offset)
 
 }
 
+void RhaNtp::setOffset(uint8_t offset)
+{
+	this->offset = offset;
+}
+
 void RhaNtp::updateTime()
 {
 	nextNtpTimeUpdate = millis();

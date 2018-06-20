@@ -47,6 +47,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <AnalogMultiButton.h>
 #include "FS.h"
+#include "Settings.h"
 
 #define RST_PIN  16 // RST-PIN for RC522 - RFID - SPI - Modul GPIO5 
 #define SS_PIN  2 // SDA-PIN for RC522 - RFID - SPI - Modul GPIO4 
@@ -333,6 +334,19 @@ void processTelegramMessages(int numNewMessages) {
             bot.sendMessage(chat_id, F("Not found"));
           }
         }
+      
+      } else if (text.startsWith(F("/settimezone")) && from_id == ADMIN_ID) {
+        Serial.println(F("Set timezone"));
+        int i = text.indexOf(' ');
+        if (i > 0) {
+          int tzoffset = text.substring(i+1).toInt();
+          ntp.setOffset(tzoffset);
+          settings.timezone = tzoffset;
+          settings.save();
+          reply.concat(F("Timezone set to: "));
+          reply.concat(tzoffset);
+          bot.sendMessage(chat_id, reply);
+        }
 
       } else if (text.startsWith(F("/debugdata")) && from_id == ADMIN_ID) {
         Serial.println(F("Build debug message"));
@@ -611,9 +625,10 @@ void setup()
     //MDNS.addService("http", "tcp", 80);
   }
 
+  settings.load();
   IPAddress timeServerIP;
-  WiFi.hostByName(NTP_SERVER, timeServerIP);
-  ntp.init(timeServerIP, TIMEZONE);
+  WiFi.hostByName(settings.timeserver, timeServerIP);
+  ntp.init(timeServerIP, settings.timezone);
   setSyncProvider(requestTime);
   setSyncInterval(60 * 60); // every hour
 

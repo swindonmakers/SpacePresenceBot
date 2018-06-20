@@ -15,6 +15,7 @@ public:
 	void init(IPAddress &timeServerIp, uint8_t offset);
 	void loop();
 	void updateTime();
+	void setOffset(uint8_t offset);
 
 	time_t localNow();
 

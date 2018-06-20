@@ -20,6 +20,3 @@
 
 #define MDNS_NAME "SpacePresenceBot"
 
-// Time server settings
-#define NTP_SERVER "pool.ntp.org"
-#define TIMEZONE 1
