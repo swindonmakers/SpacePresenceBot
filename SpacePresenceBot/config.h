@@ -9,6 +9,9 @@
 // Telegram User Id who is admin
 #define ADMIN_ID ""
 
+// How often to poll Telegram for messages (ms)
+#define TELEGRAM_CHECK_INTERVAL_MS 5000
+
 // URL to the access system for getting name from ID tag 
 #define ACCESS_SYSTEM_HOST ""
 #define ACCESS_SYSTEM_PORT 3000
