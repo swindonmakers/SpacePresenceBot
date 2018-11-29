@@ -639,6 +639,8 @@ void setup()
 
   lcdTwoLine("Present id card", "to check-in.");
   lcdOffTime = millis() + 10000;
+
+  bot.sendMessage(ADMIN_CHAT_ID, F("Startup complete"), F("Markdown"));
 }
 
 void loop() 
