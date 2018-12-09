@@ -1,3 +1,5 @@
+## Current development going on here :arrow_right: [Development Branch](https://github.com/tzapu/WiFiManager/tree/development)
+
 # WiFiManager
 ESP8266 WiFi Connection manager with fallback web configuration portal
 
@@ -43,16 +45,19 @@ First attempt at a library. Lots more changes and fixes to do. Contributions are
 ![ESP8266 WiFi Captive Portal Homepage](http://i.imgur.com/YPvW9eql.png) ![ESP8266 WiFi Captive Portal Configuration](http://i.imgur.com/oicWJ4gl.png)
 
 ## Wishlist
-- ~~remove dependency on EEPROM library~~
-- ~~move HTML Strings to PROGMEM~~
-- ~~cleanup and streamline code~~ (although this is ongoing)
-- if timeout is set, extend it when a page is fetched in AP mode
-- ~~add ability to configure more parameters than ssid/password~~
-- ~~maybe allow setting ip of ESP after reboot~~
-- ~~add to Arduino Library Manager~~
-- ~~add to PlatformIO~~
-- add multiple sets of network credentials
-- ~~allow users to customize CSS~~
+- [x] remove dependency on EEPROM library
+- [x] move HTML Strings to PROGMEM
+- [x] cleanup and streamline code (although this is ongoing)
+- [x] if timeout is set, extend it when a page is fetched in AP mode
+- [x] add ability to configure more parameters than ssid/password
+- [x] maybe allow setting ip of ESP after reboot
+- [x] add to Arduino Library Manager
+- [x] add to PlatformIO
+- [ ] add multiple sets of network credentials
+- [x] allow users to customize CSS
+- [ ] ESP32 support or instructions
+- [ ] rewrite documentation for simplicity, based on scenarios/goals
+- [ ] rely on the SDK's built in auto connect more than forcing a connect
 
 ## Quick Start
 
@@ -273,7 +278,11 @@ If you connect to the created configuration Access Point but the configuration p
 If trying to connect ends up in an endless loop, try to add `setConnectTimeout(60)` before `autoConnect();`. The parameter is timeout to try connecting in seconds.
 
 ## Releases
-#### 0.11
+#### 0.12
+- removed 204 header response
+- fixed incompatibility with other libs using isnan and other std:: functions without namespace
+
+##### 0.11
 - a lot more reliable reconnecting to networks
 - custom html in custom parameters (for read only params)
 - custom html in custom parameter form (like labels)
