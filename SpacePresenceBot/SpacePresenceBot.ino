@@ -314,6 +314,7 @@ void processTelegramMessages(int numNewMessages) {
         lcdTwoLine("Scan your token", "to reset name.");
 
       } else if (text.startsWith(F("/shownames")) && from_id == ADMIN_ID) {
+        reply.concat("Names:\n");
         Dir dir = SPIFFS.openDir("/");
         while (dir.next()) {
           File f = dir.openFile("r");
@@ -328,9 +329,17 @@ void processTelegramMessages(int numNewMessages) {
             reply.concat(F("\n"));
             f.close();
           }
+
+          if (reply.length() > 300) {
+            if (!bot.sendMessage(chat_id, reply, F("Markdown")))
+              Serial.println(F("Failed to send message"));
+            
+            reply = "";
+          }
         }
-        if (!bot.sendMessage(chat_id, reply, F("Markdown")))
-          Serial.println(F("Failed to send message"));
+        if (reply.length() > 0)
+          if (!bot.sendMessage(chat_id, reply, F("Markdown")))
+            Serial.println(F("Failed to send message"));
 
       } else if (text.startsWith(F("/remove")) && from_id == ADMIN_ID) {
         int i = text.indexOf(' ');
