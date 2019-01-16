@@ -97,7 +97,7 @@ const int BUTTONS_TOTAL = 5;
 // find out what the value of analogRead is when you press each of your buttons and put them in this array
 // you can find this out by putting Serial.println(analogRead(BUTTONS_PIN)); in your loop() and opening the serial monitor to see the values
 // make sure they are in order of smallest to largest
-const int BUTTONS_VALUES[BUTTONS_TOTAL] = {8, 303, 459, 554, 618};
+const int BUTTONS_VALUES[BUTTONS_TOTAL] = {5, 342, 519, 628, 705};
 
 AnalogMultiButton buttons(A0, BUTTONS_TOTAL, BUTTONS_VALUES);
 
@@ -671,6 +671,7 @@ void loop()
   // Debug
   if (millis() > lastDebug + DEBUG_INTERVAL) {
     //Serial.println(ESP.getFreeHeap());
+    //Serial.println(analogRead(A0));
     lastDebug = millis();
   }
 
