@@ -66,6 +66,7 @@ String UniversalTelegramBot::sendGetToTelegram(String command) {
     now = millis();
     avail = false;
     while (millis() - now < longPoll * 1000 + waitForResponse) {
+      yield();
       while (client->available()) {
         char c = client->read();
         // Serial.write(c);
@@ -107,6 +108,8 @@ String UniversalTelegramBot::sendPostToTelegram(String command,
     }
   }
   if (client->connected()) {
+    if (_debug)
+      Serial.println(F("[BOT Client]Sending POST"));
     // POST URI
     client->print("POST /" + command);
     client->println(F(" HTTP/1.1"));
@@ -135,6 +138,7 @@ String UniversalTelegramBot::sendPostToTelegram(String command,
     bool finishedHeaders = false;
     bool currentLineIsBlank = true;
     while (millis() - now < waitForResponse) {
+      yield();
       while (client->available()) {
         char c = client->read();
         responseReceived = true;
@@ -273,6 +277,7 @@ String UniversalTelegramBot::sendMultipartFormDataToTelegram(
     bool finishedHeaders = false;
     bool currentLineIsBlank = true;
     while (millis() - now < waitForResponse) {
+      yield();
       while (client->available()) {
         char c = client->read();
         responseReceived = true;

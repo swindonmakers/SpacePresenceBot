@@ -2,6 +2,7 @@
   Flash settings:
     NodeMcu
     4M (3M SPIFFS)
+    Use IwIP Variant: v2 Lower Memory (or Telegram stuff doesn't work well)
   
   Connections:
 
@@ -249,13 +250,15 @@ void processTelegramMessages(int numNewMessages) {
         reply.concat(from_name);
         reply.concat(F(", I'm the Inner Space Bot and I'll announce your name on Telegram when you "));
         reply.concat(F("scan your access token on the Makerspace Check-in hardware by the door.\n"));
-        bot.sendMessage(chat_id, reply, F("Markdown"));
+        if (!bot.sendMessage(chat_id, reply, F("Markdown")))
+          Serial.println(F("Failed to send message"));
         reply = "";
         reply.concat(F("If you'd like me to call you something other than the name you used when you signed up to the Makerspace you "));
         reply.concat(F("can use the /callme command to set a custom name.  You can always clear whatever you set by using the "));
         reply.concat(F("/resetname command.  Note that for both of these commands you also need to scan your token so make sure "));
         reply.concat(F("you are in the space!"));
-        bot.sendMessage(chat_id, reply, F("Markdown"));
+        if (!bot.sendMessage(chat_id, reply, F("Markdown")))
+          Serial.println(F("Failed to send message"));
 
       } else if (text.startsWith(F("/whosabout"))) {
         updateCheckinCache();
@@ -280,7 +283,8 @@ void processTelegramMessages(int numNewMessages) {
         if (reply == "")
           reply.concat(F("No-one is currently checked-in."));
           
-        bot.sendMessage(chat_id, reply, F("Markdown"));
+        if (!bot.sendMessage(chat_id, reply, F("Markdown")))
+          Serial.println(F("Failed to send message"));
 
       } else if (text.startsWith(F("/callme"))) {
         String originalMessage = bot.messages[i].text;
@@ -288,21 +292,25 @@ void processTelegramMessages(int numNewMessages) {
         if (i > 0) {
           customName = originalMessage.substring(i+1);
           if (customName.length() > 50) {
-            bot.sendMessage(chat_id, F("Sorry, I only have a tiny brain.  Please choose a name less than 50 characters long."));
+            if (!bot.sendMessage(chat_id, F("Sorry, I only have a tiny brain.  Please choose a name less than 50 characters long.")));
+              Serial.println(F("Failed to send message"));
           } else {
             reply.concat(F("Okay, "));
             reply.concat(customName);
             reply.concat(F(", please scan your card on the reader now. (Or let the display timeout to cancel)"));
-            bot.sendMessage(chat_id, reply);
+            if (!bot.sendMessage(chat_id, reply));
+              Serial.println(F("Failed to send message"));
             lcdTwoLine("Scan your token", customName);
           }
         } else {
-          bot.sendMessage(chat_id, F("If you'd like me to call you something else, please tell me what (eg /callme A.Maker) and then scan your card on the reader when prompted."));
+          if (!bot.sendMessage(chat_id, F("If you'd like me to call you something else, please tell me what (eg /callme A.Maker) and then scan your card on the reader when prompted.")))
+            Serial.println(F("Failed to send message"));
         }
 
       } else if (text.startsWith(F("/resetname"))) {
         clearCustomName = true;
-        bot.sendMessage(chat_id, F("Okay, please scan your card on the reader now to clear your custom moniker. (Or let the display timeout to cancel)"));
+        if (!bot.sendMessage(chat_id, F("Okay, please scan your card on the reader now to clear your custom moniker. (Or let the display timeout to cancel)")))
+          Serial.println(F("Failed to send message"));
         lcdTwoLine("Scan your token", "to reset name.");
 
       } else if (text.startsWith(F("/shownames")) && from_id == ADMIN_ID) {
@@ -321,7 +329,8 @@ void processTelegramMessages(int numNewMessages) {
             f.close();
           }
         }
-        bot.sendMessage(chat_id, reply, F("Markdown"));
+        if (!bot.sendMessage(chat_id, reply, F("Markdown")))
+          Serial.println(F("Failed to send message"));
 
       } else if (text.startsWith(F("/remove")) && from_id == ADMIN_ID) {
         int i = text.indexOf(' ');
@@ -329,9 +338,11 @@ void processTelegramMessages(int numNewMessages) {
           String tokenToRemove = text.substring(i+1);
           if (SPIFFS.exists("/" + tokenToRemove)) {
             SPIFFS.remove("/" + tokenToRemove);
-            bot.sendMessage(chat_id, F("Removed"));
+            if (!bot.sendMessage(chat_id, F("Removed")))
+              Serial.println(F("Failed to send message"));
           } else {
-            bot.sendMessage(chat_id, F("Not found"));
+            if (!bot.sendMessage(chat_id, F("Not found")))
+              Serial.println(F("Failed to send message"));
           }
         }
       
@@ -345,7 +356,8 @@ void processTelegramMessages(int numNewMessages) {
           settings.save();
           reply.concat(F("Timezone set to: "));
           reply.concat(tzoffset);
-          bot.sendMessage(chat_id, reply);
+          if (!bot.sendMessage(chat_id, reply))
+            Serial.println(F("Failed to send message"));
         }
 
       } else if (text.startsWith(F("/debugdata")) && from_id == ADMIN_ID) {
@@ -365,13 +377,15 @@ void processTelegramMessages(int numNewMessages) {
         reply.concat(F("\nLast Token: "));
         reply.concat(lastTokenTime);
         
-        bot.sendMessage(chat_id, reply, F("Markdown"));
+        if (!bot.sendMessage(chat_id, reply, F("Markdown")))
+          Serial.println(F("Failed to send message"));
 
       } else if (text.startsWith(F("/initreader"))) {
         Serial.println(F("Init card reader"));
         mfrc522.PCD_Init();
         yield();
-        bot.sendMessage(chat_id, F("Reader init done"), "");
+        if (!bot.sendMessage(chat_id, F("Reader init done"), ""))
+          Serial.println(F("Failed to send message"));
 
       } else {
         // unknown message
@@ -384,7 +398,8 @@ void processTelegramMessages(int numNewMessages) {
       reply.concat(F("\nfrom_id:")); reply.concat(from_id);
       reply.concat(F("\ntext:")); reply.concat(text);
 
-      bot.sendMessage(ADMIN_CHAT_ID, reply, F("Markdown"));
+      if (!bot.sendMessage(ADMIN_CHAT_ID, reply, F("Markdown")))
+        Serial.println(F("Failed to send message"));
     }
   }
 }
@@ -555,15 +570,22 @@ void processToken(String token)
           if (checkout) {
             lcdTwoLine("Goodbye", name);
             removeFromCheckinCache(token);
-            bot.sendMessage(GROUP_CHAT_ID, name + " has left the space.", "");
+            if (!bot.sendMessage(GROUP_CHAT_ID, name + " has left the space.", ""))
+              Serial.println(F("Failed to send message"));
 
           } else {
             lcdTwoLine("Welcome!", name);
             addToCheckinCache(token, name, ntp.localNow(), stayTime);
-            if (stayTime > 0)
-              bot.sendMessage(GROUP_CHAT_ID, name + " has arrived in the space and will be around for about " + String(stayTime) + " hours", "");
-            else 
-              bot.sendMessage(GROUP_CHAT_ID, name + " has arrived in the space.", "");
+            if (stayTime > 0) {
+              if (!bot.sendMessage(GROUP_CHAT_ID, name + " has arrived in the space and will be around for about " + String(stayTime) + " hours", "")) {
+                Serial.println(F("Failed to send message"));
+              }
+            }
+            else {
+              if (!bot.sendMessage(GROUP_CHAT_ID, name + " has arrived in the space.", "")) {
+                Serial.println(F("Failed to send message"));
+              }
+            }
             
           }
         }
@@ -640,7 +662,8 @@ void setup()
   lcdTwoLine("Present id card", "to check-in.");
   lcdOffTime = millis() + 10000;
 
-  bot.sendMessage(ADMIN_CHAT_ID, F("Startup complete"), F("Markdown"));
+  if (!bot.sendMessage(ADMIN_CHAT_ID, F("Startup complete"), F("Markdown")))
+    Serial.println(F("Failed to send message"));
 }
 
 void loop() 
