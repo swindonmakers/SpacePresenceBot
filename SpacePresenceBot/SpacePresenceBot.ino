@@ -389,7 +389,7 @@ void processTelegramMessages(int numNewMessages) {
         if (!bot.sendMessage(chat_id, reply, F("Markdown")))
           Serial.println(F("Failed to send message"));
 
-      } else if (text.startsWith(F("/initreader"))) {
+      } else if (text.startsWith(F("/initreader")) && from_id == ADMIN_ID) {
         Serial.println(F("Init card reader"));
         mfrc522.PCD_Init();
         yield();
