@@ -719,7 +719,9 @@ void loop()
     // Checking version first doesn't seem a reliable way to test if its working
     // and the call to check card doesn't fail in any detecable way.
     mfrc522.PCD_Init();
-    yield();
+    // Wait for the reader to initialise, or else some cards (paper tags with longer
+    // id's) dont get recognised
+    delay(150);
 
     if (mfrc522.PICC_IsNewCardPresent()) {
       Serial.print(F("Reader reports new card"));
