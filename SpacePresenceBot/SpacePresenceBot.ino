@@ -62,6 +62,11 @@ WiFiClientSecure client;
 UniversalTelegramBot bot(BOTtoken, client);
 MFRC522 mfrc522(SS_PIN, RST_PIN); 
 
+// Telegram API SSL fingerprint
+// On the site https://www.grc.com/fingerprints.htm in section "Custom Site Fingerprinting" 
+// enter api.telegram.org in textbox and press button "Fingerprint Site" to get this value
+const uint8_t fingerprint[20] = { 0xBB, 0xDC, 0x45, 0x2A, 0x07, 0xE3, 0x4A, 0x71, 0x33, 0x40, 0x32, 0xDA, 0xBE, 0x81, 0xF7, 0x72, 0x6F, 0x4A, 0x2B, 0x6B };
+
 time_t bootTime = 0; // boot time
 unsigned long lastDebug; // last time debug messages were send to serial
 #define DEBUG_INTERVAL 5000
@@ -670,6 +675,8 @@ void setup()
 
   lcdTwoLine("Present id card", "to check-in.");
   lcdOffTime = millis() + 10000;
+
+  client.setFingerprint(fingerprint); // Register telegram API SSL fingerprint
 
   if (!bot.sendMessage(ADMIN_CHAT_ID, F("Startup complete"), F("Markdown")))
     Serial.println(F("Failed to send message"));
