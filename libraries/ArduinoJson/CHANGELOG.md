@@ -1,6 +1,18 @@
 ArduinoJson: change log
 =======================
 
+v5.13.5
+-------
+
+* Fixed warning "unused variable" with GCC 4.4 (issue #912)
+* Fixed warning "maybe uninitialized" (issue #909)
+* Added an clear message for `StaticJsonDocument`, `DynamicJsonDocument`...
+
+v5.13.4
+-------
+
+* Removed spurious files in the Particle library
+
 v5.13.3
 -------
 

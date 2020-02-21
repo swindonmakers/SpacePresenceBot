@@ -1,8 +1,12 @@
 /* 
+  Arudino IDE 1.8.9
+  ESP8226 Core: 2.6.3
   Flash settings:
     NodeMcu
     4M (3M SPIFFS)
+    Builtin LED: 16
     Use IwIP Variant: v2 Lower Memory (or Telegram stuff doesn't work well)
+    SSL Support: All ciphers
   
   Connections:
 
