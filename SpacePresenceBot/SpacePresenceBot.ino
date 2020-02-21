@@ -297,13 +297,13 @@ void processTelegramMessages(int numNewMessages) {
         if (i > 0) {
           customName = originalMessage.substring(i+1);
           if (customName.length() > 50) {
-            if (!bot.sendMessage(chat_id, F("Sorry, I only have a tiny brain.  Please choose a name less than 50 characters long.")));
+            if (!bot.sendMessage(chat_id, F("Sorry, I only have a tiny brain.  Please choose a name less than 50 characters long.")))
               Serial.println(F("Failed to send message"));
           } else {
             reply.concat(F("Okay, "));
             reply.concat(customName);
             reply.concat(F(", please scan your card on the reader now. (Or let the display timeout to cancel)"));
-            if (!bot.sendMessage(chat_id, reply));
+            if (!bot.sendMessage(chat_id, reply))
               Serial.println(F("Failed to send message"));
             lcdTwoLine("Scan your token", customName);
           }
