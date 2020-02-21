@@ -678,7 +678,7 @@ void setup()
 void loop() 
 {
   // Debug
-  if (millis() > lastDebug + DEBUG_INTERVAL) {
+  if (millis() - lastDebug > DEBUG_INTERVAL) {
     //Serial.println(ESP.getFreeHeap());
     //Serial.println(analogRead(A0));
     lastDebug = millis();
@@ -699,7 +699,7 @@ void loop()
   else if (buttons.onPress(4)) setCheckout();
   
   // Check Telegram
-  if (millis() > telegramLastCheck + TELEGRAM_CHECK_INTERVAL_MS)  {
+  if (millis() - telegramLastCheck > TELEGRAM_CHECK_INTERVAL_MS)  {
     int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
     yield();
 
@@ -713,7 +713,7 @@ void loop()
   }
 
   // Check card reader
-  if (millis() > cardreaderLastCheck + CARDREADER_CHECK_INTERVAL_MS) {
+  if (millis() - cardreaderLastCheck > CARDREADER_CHECK_INTERVAL_MS) {
 
     // Init the reader on every call to make sure its working correctly.
     // Checking version first doesn't seem a reliable way to test if its working
@@ -751,7 +751,7 @@ void loop()
   }
 
   // Token debounce
-  if (lastToken != "" && millis() > lastTokenTime + TOKEN_DEBOUNCE_TIME_MS) {
+  if (lastToken != "" && millis() - lastTokenTime > TOKEN_DEBOUNCE_TIME_MS) {
     Serial.println(F("Clear last token"));
     lastToken = "";
     stayTime = 0;
@@ -761,7 +761,7 @@ void loop()
   }
 
   // LCD Backlight timeout
-  if (lcdOffTime !=0 && millis() > lcdOffTime) {
+  if (lcdOffTime !=0 && (millis() - lcdOffTime > 0)) {
     Serial.println(F("Backlight off"));
     lcd.setBacklight(LOW);
     lcd.clear();
