@@ -523,8 +523,9 @@ void processToken(String token)
   lcdTwoLine("Let me check", "your token...");
   unsigned long tStart = millis();
 
+  WiFiClient wc;
   HTTPClient http;
-  http.begin(ACCESS_SYSTEM_HOST, ACCESS_SYSTEM_PORT, ACCESS_SYSTEM_URL + token);
+  http.begin(wc, ACCESS_SYSTEM_HOST, ACCESS_SYSTEM_PORT, ACCESS_SYSTEM_URL + token);
   int httpCode = http.GET();
   if (httpCode > 0) {
 
@@ -772,7 +773,7 @@ void loop()
   }
 
   // LCD Backlight timeout
-  if (lcdOffTime !=0 && (millis() - lcdOffTime > 0)) {
+  if (lcdOffTime !=0 && millis() > lcdOffTime) {
     Serial.println(F("Backlight off"));
     lcd.setBacklight(LOW);
     lcd.clear();
