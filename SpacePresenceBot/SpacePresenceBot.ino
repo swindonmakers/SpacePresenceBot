@@ -681,7 +681,8 @@ void setup()
   lcdTwoLine("Present id card", "to check-in.");
   lcdOffTime = millis() + 10000;
 
-  client.setFingerprint(fingerprint); // Register telegram API SSL fingerprint
+  client.setInsecure(); // Ignore fingerprint checks as the SSL fingerprint changes too often
+  //client.setFingerprint(fingerprint); // Register telegram API SSL fingerprint
 
   if (!bot.sendMessage(ADMIN_CHAT_ID, F("Startup complete"), F("Markdown")))
     Serial.println(F("Failed to send message"));
